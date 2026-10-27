@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Original site colors from pixel-shine-dashboard.lovable.app */
+    /* Gold/Primary: oklch(74.7% .18 57.4) ≈ HSL 40, 75%, 50% */
+    --primary: 40 75% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    /* Secondary/Muted: oklch(28.18% .0217 254.18) ≈ HSL 220, 15%, 18% */
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 220 10% 92%;
+
+    /* Background: oklch(14.5% 0 0) ≈ HSL 220, 20%, 7% */
+    --background: 220 20% 7%;
+    --foreground: 220 10% 92%;
+
+    /* Card: oklch(18% 0 0) ≈ HSL 220, 20%, 10% */
+    --card: 220 20% 10%;
+    --card-foreground: 220 10% 92%;
+
+    --popover: 220 20% 10%;
+    --popover-foreground: 220 10% 92%;
+
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 8% 55%;
+
+    --accent: 220 15% 18%;
+    --accent-foreground: 220 10% 92%;
+
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 92%;
+
+    --border: 220 10% 22%;
+    --input: 220 10% 22%;
+    --ring: 40 75% 50%;
+
+    --radius: 0.625rem;
+
+    /* Custom tactical colors */
+    --steel: 210 30% 55%;
+    --ember: 25 80% 45%;
+    --gold: 40 75% 50%;
+    --gold-foreground: 40 90% 65%;
+    --surface: 220 20% 12%;
+
+    /* Charts */
+    --chart-1: 40 75% 50%;
+    --chart-2: 180 70% 50%;
+    --chart-3: 210 30% 55%;
+    --chart-4: 280 60% 55%;
+    --chart-5: 160 70% 45%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .label-mono {
+    @apply font-mono text-xs font-medium uppercase tracking-wider;
+  }
+
+  .data-mono {
+    @apply font-mono text-sm font-medium tracking-wide;
+  }
+
+  .surface {
+    background-color: hsl(var(--surface));
+  }
+
+  .hero-scrim {
+    background: linear-gradient(
+      to bottom,
+      hsl(220 20% 7% / 0) 0%,
+      hsl(220 20% 7% / 0.4) 50%,
+      hsl(220 20% 7% / 0.8) 100%
+    );
+  }
+}

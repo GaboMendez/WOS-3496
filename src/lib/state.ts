@@ -1,45 +1,16 @@
-import { supabase } from "@/integrations/supabase/client";
+import type { StateSetting } from "@/db/schema";
 
-export type StateSettings = {
-  id: string;
-  state_number: number;
-  display_name: string;
-  tagline: string | null;
-  discord_url: string | null;
-  launch_date: string | null;
-  transfer_group: string | null;
-  eligibility_range: string | null;
-  recruiting_status: string | null;
-  transfer_spots: number | null;
-  power_cap_note: string | null;
-  current_event: string | null;
-  next_event_date: string | null;
-  timezone: string;
-  hero_generation: string | null;
-  social_links: unknown;
-  disclaimer: string;
-  hero_image_url: string | null;
-  updated_at: string;
-};
+export type { StateSetting };
 
-export const stateSettingsQuery = {
-  queryKey: ["state_settings"],
-  queryFn: async (): Promise<StateSettings | null> => {
-    const { data, error } = await supabase
-      .from("state_settings")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
-    if (error) throw error;
-    return (data as StateSettings) ?? null;
-  },
-};
-
-export function serverDay(launchDate: string | null | undefined): number | null {
+export function calculateServerDay(launchDate: string | null | undefined): number | null {
   if (!launchDate) return null;
   const launch = Date.parse(`${launchDate}T00:00:00Z`);
   if (Number.isNaN(launch)) return null;
   return Math.floor((Date.now() - launch) / 86_400_000) + 1;
+}
+
+export function serverDay(launchDate: string | null | undefined): number | null {
+  return calculateServerDay(launchDate);
 }
 
 export function formatPower(value: number | null | undefined): string {

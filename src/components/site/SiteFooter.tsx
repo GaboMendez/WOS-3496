@@ -1,11 +1,18 @@
-import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { stateSettingsQuery, formatUtcDateTime } from "@/lib/state";
+"use client";
 
-export function SiteFooter() {
-  const { data: settings } = useQuery(stateSettingsQuery);
-  const socials = Array.isArray(settings?.social_links)
-    ? (settings?.social_links as { label?: string; url?: string }[])
+import Link from "next/link";
+import { formatUtcDateTime } from "../../lib/state";
+import type { StateSetting } from "../../../db/schema";
+
+interface SiteFooterProps {
+  settings?: StateSetting | null;
+}
+
+export function SiteFooter({ settings }: SiteFooterProps) {
+  const socials = settings?.socialLinks
+    ? typeof settings.socialLinks === "string"
+      ? (JSON.parse(settings.socialLinks) as { label?: string; url?: string }[])
+      : (settings.socialLinks as { label?: string; url?: string }[])
     : [];
 
   return (
@@ -13,39 +20,39 @@ export function SiteFooter() {
       <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-3">
         <div>
           <p className="font-display text-base font-semibold">
-            {settings?.display_name ?? "State 3496"}
+            {settings?.displayName ?? "State 3496"}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
             {settings?.tagline ?? "Community portal for the State 3496 player base."}
           </p>
           <p className="label-mono mt-4">
-            Last updated {formatUtcDateTime(settings?.updated_at)}
+            Last updated {formatUtcDateTime(settings?.updatedAt ?? null)}
           </p>
         </div>
 
         <nav className="grid grid-cols-2 gap-2 text-sm" aria-label="Footer">
-          <Link to="/alliances" className="text-muted-foreground hover:text-foreground">
+          <Link href="/alliances" className="text-muted-foreground hover:text-foreground">
             Alliances
           </Link>
-          <Link to="/governance" className="text-muted-foreground hover:text-foreground">
+          <Link href="/governance" className="text-muted-foreground hover:text-foreground">
             Governance
           </Link>
-          <Link to="/transfers" className="text-muted-foreground hover:text-foreground">
+          <Link href="/transfers" className="text-muted-foreground hover:text-foreground">
             Transfers
           </Link>
-          <Link to="/timeline" className="text-muted-foreground hover:text-foreground">
+          <Link href="/timeline" className="text-muted-foreground hover:text-foreground">
             Timeline
           </Link>
-          <Link to="/operations" className="text-muted-foreground hover:text-foreground">
+          <Link href="/operations" className="text-muted-foreground hover:text-foreground">
             Operations
           </Link>
-          <Link to="/svs" className="text-muted-foreground hover:text-foreground">
+          <Link href="/svs" className="text-muted-foreground hover:text-foreground">
             SvS records
           </Link>
-          <Link to="/community" className="text-muted-foreground hover:text-foreground">
+          <Link href="/community" className="text-muted-foreground hover:text-foreground">
             Community
           </Link>
-          <Link to="/admin" className="text-muted-foreground hover:text-foreground">
+          <Link href="/admin" className="text-muted-foreground hover:text-foreground">
             Admin
           </Link>
         </nav>
@@ -53,11 +60,11 @@ export function SiteFooter() {
         <div>
           <p className="label-mono">Elsewhere</p>
           <ul className="mt-2 space-y-1 text-sm">
-            {settings?.discord_url ? (
+            {settings?.discordUrl ? (
               <li>
                 <a
                   className="text-steel hover:underline"
-                  href={settings.discord_url}
+                  href={settings.discordUrl}
                   target="_blank"
                   rel="noreferrer noopener"
                 >

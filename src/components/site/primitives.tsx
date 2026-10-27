@@ -1,13 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function Section({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function Section({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <section className={cn("mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-10", className)}>
       {children}
@@ -31,9 +25,7 @@ export function SectionHeading({
       <div className="max-w-2xl">
         {eyebrow ? <p className="label-mono mb-2">{eyebrow}</p> : null}
         <h2 className="text-xl font-semibold sm:text-2xl">{title}</h2>
-        {description ? (
-          <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-        ) : null}
+        {description ? <p className="mt-2 text-sm text-muted-foreground">{description}</p> : null}
       </div>
       {action}
     </div>
@@ -85,12 +77,14 @@ export function DataPoint({
 export function EmptyState({
   title = "Information coming soon",
   description = "This data has not been supplied for State 3496 yet.",
+  className,
 }: {
   title?: string;
   description?: string;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-col items-start gap-1 border border-dashed border-border bg-card p-6">
+    <div className={cn("flex flex-col items-start gap-1 border border-dashed border-border bg-card p-6", className)}>
       <p className="label-mono">Awaiting data</p>
       <p className="font-display text-base font-medium">{title}</p>
       <p className="text-sm text-muted-foreground">{description}</p>
@@ -119,21 +113,26 @@ export function ErrorNote({ message }: { message?: string }) {
 export function Tag({
   children,
   tone = "steel",
+  className,
 }: {
   children: ReactNode;
-  tone?: "steel" | "gold" | "ember" | "muted";
+  tone?: "steel" | "gold" | "ember" | "muted" | "green" | "red";
+  className?: string;
 }) {
   const tones: Record<string, string> = {
     steel: "border-steel/40 text-steel",
     gold: "border-gold/60 text-gold-foreground bg-gold/15",
     ember: "border-ember/50 text-ember",
     muted: "border-border text-muted-foreground",
+    green: "border-emerald-500/50 text-emerald-400",
+    red: "border-destructive/50 text-destructive",
   };
   return (
     <span
       className={cn(
         "label-mono inline-flex items-center rounded-xs border px-2 py-0.5 leading-5",
         tones[tone],
+        className,
       )}
     >
       {children}
