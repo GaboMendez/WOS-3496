@@ -9,7 +9,6 @@
 
 State 3496 is a public website for the state's players. Anyone can read it without signing in. Staff (admins and editors) manage every piece of content from a built-in Admin panel at `/admin`. Nothing on the public site is invented: when information hasn't been entered yet, pages show an honest **"Information coming soon"** message instead of fake data.
 
-**Legacy preview URL:** https://id-preview--9b34b515-2de3-4989-8ac1-0d9aa1f5c931.lovable.app
 **Published URL:** not published yet
 
 ### Principles

@@ -35,7 +35,7 @@ Then open <http://localhost:3000>
 
 ## Database
 
-The database is stored in `data/portal.db` (SQLite file). Set `DATABASE_URL` to another `file:` URL to use a different local database. The active SQLite migrations are in `drizzle/sqlite`; `drizzle/migrations` contains the previous PostgreSQL schema for reference.
+The database is stored in `data/portal.db` (SQLite file). Set `DATABASE_URL` to another `file:` URL to use a different local database. The SQLite migrations are in `drizzle/sqlite`.
 
 Set a strong `JWT_SECRET` in an ignored `.env.local` file before running the app. The example value in `.env.example` is only a template.
 

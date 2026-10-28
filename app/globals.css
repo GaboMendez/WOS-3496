@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Original site colors from pixel-shine-dashboard.lovable.app */
+    /* Shared tactical dark palette */
     /* Gold/Primary: oklch(74.7% .18 57.4) ≈ HSL 40, 75%, 50% */
     --primary: 40 75% 50%;
     --primary-foreground: 0 0% 0%;
