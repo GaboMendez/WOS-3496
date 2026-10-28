@@ -25,6 +25,8 @@ bun run dev
 
 Open <http://localhost:3000>. Run `db:migrate` only for a new database. If you already have `data/portal.db`, keep it and skip that command. `db:bootstrap-admin` prompts for an email and masked password; it can also reset an existing local admin account.
 
+If you create or change `.env.local` while the server is running, stop it with Ctrl+C and run `bun run dev` again. Next.js reads environment variables at startup.
+
 To load **demo content** into an empty database, run `bun run db:seed` once before starting the app. The seed is sample data, not real State 3496 records. A new database has no previous content; restore a backup or add content in `/admin`.
 
 ## Fresh rebuild
