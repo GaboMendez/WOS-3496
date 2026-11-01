@@ -1,4 +1,5 @@
 import { createClient } from "@libsql/client";
+import { migrateLegacyDatabase } from "./upgrade-schema";
 
 const client = createClient({ url: process.env.DATABASE_URL || "file:data/portal.db" });
 
@@ -27,6 +28,7 @@ try {
     await client.execute('ALTER TABLE svs_cycles RENAME COLUMN "notNull" TO opponent');
     console.log("Renamed SvS opponent column.");
   }
+  await migrateLegacyDatabase(client);
 } finally {
   client.close();
 }

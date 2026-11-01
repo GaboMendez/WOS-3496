@@ -1,4 +1,12 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  integer,
+  real,
+  index,
+  uniqueIndex,
+  type AnySQLiteColumn,
+} from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 // Enums
@@ -11,6 +19,7 @@ export type AppRole = (typeof appRoleEnum)[number];
 export const allianceLeaders = sqliteTable("alliance_leaders", {
   id: text("id").primaryKey(),
   allianceId: text("alliance_id").notNull(),
+  playerId: text("player_id").references((): AnySQLiteColumn => players.id),
   name: text("name").notNull(),
   rankTitle: text("rank_title").notNull(),
   discordHandle: text("discord_handle"),
@@ -34,12 +43,16 @@ export const alliances = sqliteTable("alliances", {
   name: text("name").notNull(),
   slug: text("slug").notNull(),
   tag: text("tag").notNull(),
+  kind: text("kind", { enum: ["active", "farm", "other"] })
+    .notNull()
+    .default("active"),
+  farmOfAllianceId: text("farm_of_alliance_id").references((): AnySQLiteColumn => alliances.id),
   description: text("description"),
   shortDescription: text("short_description"),
   bannerUrl: text("banner_url"),
-  power: integer("power").notNull().default(0),
-  openSpots: integer("open_spots").notNull().default(0),
-  recruitingStatus: text("recruiting_status").notNull().default("closed"),
+  power: integer("power").default(0),
+  openSpots: integer("open_spots").default(0),
+  recruitingStatus: text("recruiting_status").default("closed"),
   playstyle: text("playstyle"),
   timezoneLabel: text("timezone_label"),
   hqCoordinates: text("hq_coordinates"),
@@ -167,6 +180,21 @@ export const stateSettings = sqliteTable("state_settings", {
   timezone: text("timezone").notNull().default("UTC"),
   disclaimer: text("disclaimer").notNull().default(""),
   launchDate: text("launch_date"),
+  launchMonth: text("launch_month"),
+  activeAllianceCount: integer("active_alliance_count"),
+  farmAllianceCount: integer("farm_alliance_count"),
+  fireCrystalLevel: integer("fire_crystal_level"),
+  svsRating: integer("svs_rating"),
+  prepRating: integer("prep_rating"),
+  castleRating: integer("castle_rating"),
+  globalRank: integer("global_rank"),
+  rankedStates: integer("ranked_states"),
+  transferGroupRank: integer("transfer_group_rank"),
+  transferGroupStates: integer("transfer_group_states"),
+  top100Power: integer("top100_power"),
+  top100Kills: integer("top100_kills"),
+  top100Exploration: integer("top100_exploration"),
+  statisticsDate: text("statistics_date"),
   heroGeneration: text("hero_generation"),
   heroImageUrl: text("hero_image_url"),
   currentEvent: text("current_event"),
@@ -319,6 +347,128 @@ export const userRoles = sqliteTable("user_roles", {
   userId: text("user_id").notNull(),
   role: text("role", { enum: appRoleEnum }).notNull(),
 });
+
+// Game accounts are separate from portal authentication profiles.
+export const players = sqliteTable(
+  "players",
+  {
+    id: text("id").primaryKey(),
+    chiefId: text("chief_id").unique(),
+    allianceId: text("alliance_id")
+      .notNull()
+      .references(() => alliances.id),
+    name: text("name").notNull(),
+    rankTitle: text("rank_title", { enum: ["R1", "R2", "R3", "R4", "R5"] }),
+    furnaceLevel: text("furnace_level"),
+    power: integer("power"),
+    kills: integer("kills"),
+    activityStatus: text("activity_status", { enum: ["active", "casual", "inactive"] }),
+    accountKind: text("account_kind", { enum: ["main", "farm"] }),
+    farmOfPlayerId: text("farm_of_player_id").references((): AnySQLiteColumn => players.id),
+    lastActiveAt: text("last_active_at"),
+  },
+  (table) => [index("players_alliance_idx").on(table.allianceId)],
+);
+
+export const facilities = sqliteTable("facilities", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  kind: text("kind", { enum: ["sunfire", "stronghold", "fortress", "facility"] }).notNull(),
+  level: integer("level"),
+  coordinates: text("coordinates"),
+  territory: text("territory"),
+  notes: text("notes"),
+});
+
+export const rotationSlots = sqliteTable(
+  "rotation_slots",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind", {
+      enum: ["presidency", "sunfire", "stronghold", "fortress", "facility", "event"],
+    }).notNull(),
+    facilityId: text("facility_id").references(() => facilities.id),
+    allianceId: text("alliance_id")
+      .notNull()
+      .references(() => alliances.id),
+    playerId: text("player_id").references(() => players.id),
+    playerName: text("player_name"),
+    allDay: integer("all_day", { mode: "boolean" }).notNull().default(false),
+    startsAt: text("starts_at").notNull(),
+    endsAt: text("ends_at"), // null when the term's end has not been recorded
+    status: text("status", { enum: ["completed", "active", "scheduled", "cancelled"] }).notNull(),
+    responsibility: text("responsibility").notNull(),
+    notes: text("notes"),
+  },
+  (table) => [index("rotation_slots_time_idx").on(table.startsAt, table.endsAt)],
+);
+
+export const calendarEvents = sqliteTable("calendar_events", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  kind: text("kind").notNull(),
+  allianceId: text("alliance_id").references(() => alliances.id),
+  cycleId: text("cycle_id").references(() => svsCycles.id),
+  rotationSlotId: text("rotation_slot_id").references(() => rotationSlots.id),
+  startsAt: text("starts_at").notNull(),
+  endsAt: text("ends_at").notNull(),
+  allDay: integer("all_day", { mode: "boolean" }).notNull().default(false),
+  status: text("status", {
+    enum: ["completed", "active", "scheduled", "cancelled", "tentative"],
+  }).notNull(),
+  notes: text("notes"),
+  published: integer("published", { mode: "boolean" }).notNull().default(false),
+});
+
+export const eventParticipants = sqliteTable(
+  "event_participants",
+  {
+    id: text("id").primaryKey(),
+    eventId: text("event_id")
+      .notNull()
+      .references(() => calendarEvents.id),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    role: text("role").notNull(),
+    attendance: text("attendance", {
+      enum: ["confirmed", "tentative", "declined", "attended", "absent"],
+    }).notNull(),
+    score: integer("score"),
+  },
+  (table) => [uniqueIndex("event_participants_unique").on(table.eventId, table.playerId)],
+);
+
+export const rankingSnapshots = sqliteTable("ranking_snapshots", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  metric: text("metric", { enum: ["power", "kills"] }).notNull(),
+  subjectKind: text("subject_kind", { enum: ["player", "alliance"] }).notNull(),
+  capturedAt: text("captured_at").notNull(),
+});
+
+export const rankingEntries = sqliteTable(
+  "ranking_entries",
+  {
+    id: text("id").primaryKey(),
+    snapshotId: text("snapshot_id")
+      .notNull()
+      .references(() => rankingSnapshots.id),
+    playerId: text("player_id").references(() => players.id),
+    allianceId: text("alliance_id").references(() => alliances.id),
+    rank: integer("rank").notNull(),
+    value: integer("value").notNull(),
+  },
+  (table) => [uniqueIndex("ranking_entries_rank_unique").on(table.snapshotId, table.rank)],
+);
+
+export type Player = typeof players.$inferSelect;
+export type Facility = typeof facilities.$inferSelect;
+export type RotationSlot = typeof rotationSlots.$inferSelect;
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type EventParticipant = typeof eventParticipants.$inferSelect;
+export type RankingSnapshot = typeof rankingSnapshots.$inferSelect;
+export type RankingEntry = typeof rankingEntries.$inferSelect;
 
 // Export all table types
 export type Alliance = typeof alliances.$inferSelect;
