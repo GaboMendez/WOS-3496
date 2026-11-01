@@ -15,7 +15,11 @@
     "db:upgrade": "bun run db/upgrade.ts",
     "db:bootstrap-admin": "bun run db/bootstrap-admin.ts",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "bun run db/seed.ts"
+    "db:seed": "bun run db/seed.ts",
+    "db:seed:reset": "bun run db/seed.ts --reset",
+    "db:seed:check": "bun run db/seed.ts --check",
+    "db:seed:preview": "bun run db/seed.ts --dry-run",
+    "db:seed:test": "bun test --timeout 120000 db/seeds/seed.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

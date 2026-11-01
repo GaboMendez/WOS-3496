@@ -19,15 +19,16 @@ if (-not (Test-Path -LiteralPath '.env.local')) {
   Set-Content -LiteralPath '.env.local' -Value "JWT_SECRET=$([Convert]::ToBase64String($secretBytes))" -Encoding Ascii
 }
 bun run db:migrate
+bun run db:seed
 bun run db:bootstrap-admin
 bun run dev
 ```
 
-Open <http://localhost:3000>. Run `db:migrate` only for a new database. If you already have `data/portal.db`, keep it and skip that command. `db:bootstrap-admin` prompts for an email and masked password; it can also reset an existing local admin account.
+Open <http://localhost:3000>. Run `db:migrate` for a new database or pending migrations. If an existing database has no migration history, use `db:upgrade` instead. Keep `data/portal.db`. `db:bootstrap-admin` prompts for an email and masked password; it can also reset an existing local admin account.
 
 If you create or change `.env.local` while the server is running, stop it with Ctrl+C and run `bun run dev` again. Next.js reads environment variables at startup.
 
-To load **demo content** into an empty database, run `bun run db:seed` once before starting the app. The seed is sample data, not real State 3496 records. A new database has no previous content; restore a backup or add content in `/admin`.
+Run `bun run db:seed` to load the fixed State 3496 dataset. It updates the same seeded rows on repeated runs and preserves staff accounts and unrelated content. See [the seed guide](docs/seed-data.md) for the data, reset and validation commands.
 
 ## Fresh rebuild
 
@@ -146,8 +147,10 @@ The default database is `data/portal.db`. Set `DATABASE_URL` to another `file:` 
 | Transfers | `transfer_windows`, `transfer_groups`, `transfer_guides` |
 | History and SvS | `timeline_events`, `svs_cycles`, `svs_story_metrics`, `state_stories` |
 | Other content | `operations_content`, `creators`, `media_assets` |
+| Game data | `players`, `facilities`, `rotation_slots`, `calendar_events`, `event_participants` |
+| Rankings | `ranking_snapshots`, `ranking_entries` |
 
-Only published records are returned by the main public content queries; governance accepts `active` and `published` status. Editors can manage drafts through the admin API. Media assets store URLs; there is no file upload workflow. Use the admin editor for ongoing content changes. `db:seed` is intended for an empty demo database and is not idempotent.
+Only published records are returned by the main public content queries; governance accepts `active` and `published` status. Editors can manage drafts through the admin API. Media assets store URLs; there is no file upload workflow. Use the admin editor for ongoing content changes. `db:seed` is idempotent and restores the fixed values of seeded records.
 
 Formatting helpers in `src/lib/state.ts` calculate server day from the UTC launch date, abbreviate power (for example, `1.2B` or `345.6M`), format UTC dates, and convert an alliance event's `HH:MM` UTC time to the visitor's local time. The root layout supplies site-wide page and social metadata; transfer detail pages supply their own titles and descriptions. Admin pages are marked for no indexing.
 
@@ -158,11 +161,14 @@ Formatting helpers in `src/lib/state.ts` calculate server day from the UTC launc
 | `bun run db:migrate` | Create the schema in a new database from `drizzle/sqlite` |
 | `bun run db:upgrade` | Upgrade a database made by the first Next.js migration |
 | `bun run db:bootstrap-admin` | Create or reset a local admin account |
-| `bun run db:seed` | Add sample content to an empty database |
+| `bun run db:seed` | Load or restore the State 3496 dataset |
+| `bun run db:seed:reset` | Recreate only seeded records |
+| `bun run db:seed:check` | Validate stored seed values and relationships |
+| `bun run db:seed:test` | Verify the seed using isolated databases |
 | `bun run db:studio` | Browse the local database in Drizzle Studio |
 | `bun run db:generate` | Generate a migration after changing `db/schema.ts` |
 
-Back up `data/portal.db` before manual schema changes. Never run `db:seed` against a database containing content you want to keep.
+Back up `data/portal.db` before manual schema changes. The seed restores its known record IDs and leaves unrelated records unchanged.
 
 ## Visual system
 
