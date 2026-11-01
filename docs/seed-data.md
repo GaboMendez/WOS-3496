@@ -36,9 +36,6 @@ For an older database created without Drizzle migration history, run `bun.exe ru
 bun.exe run db:seed:preview  # validate without writing
 bun.exe run db:seed:check    # compare seeded rows with the fixture
 bun.exe run db:seed:reset    # recreate only the known seeded rows
-bun.exe run db:seed:test
 ```
 
 `db:seed` uses deterministic IDs and timestamps and upserts the same rows on every run. It preserves staff profiles, passwords, roles and unrelated editorial content. `db:seed:reset` deletes only the fixture's known IDs in dependency order and rolls back if additional records depend on them.
-
-The tests cover repeated seeding, relationships, native player and statistic rows, missing values, drift and repair, selective reset, preserved authentication records, migration of existing relational data and protection of editorial dependencies.

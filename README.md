@@ -164,7 +164,6 @@ Formatting helpers in `src/lib/state.ts` calculate server day from the UTC launc
 | `bun run db:seed` | Load or restore the State 3496 dataset |
 | `bun run db:seed:reset` | Recreate only seeded records |
 | `bun run db:seed:check` | Validate stored seed values and relationships |
-| `bun run db:seed:test` | Verify the seed using isolated databases |
 | `bun run db:studio` | Browse the local database in Drizzle Studio |
 | `bun run db:generate` | Generate a migration after changing `db/schema.ts` |
 
