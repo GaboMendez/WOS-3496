@@ -32,13 +32,9 @@ export default async function HomePage() {
   ]);
 
   const day = calculateServerDay(settings?.launchDate || null);
-  const totalPower = alliancesData.reduce((sum, a) => sum + Number(a.power ?? 0), 0);
   const openSpots = alliancesData.reduce((sum, a) => sum + Number(a.openSpots ?? 0), 0);
-  const prepWins = svsData.filter((c) => c.prepResult === "win").length;
-  const prepLosses = svsData.filter((c) => c.prepResult === "loss").length;
   const battleWins = svsData.filter((c) => c.battleResult === "win").length;
   const battleLosses = svsData.filter((c) => c.battleResult === "loss").length;
-  const latest = svsData[0];
 
   return (
     <SiteLayout settings={settings}>
@@ -91,7 +87,7 @@ export default async function HomePage() {
       {/* status strip */}
       <div className="border-b border-border bg-card">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap gap-x-8 gap-y-3 px-4 py-4 sm:px-6">
-          <StripItem label="Server day" value={day ? `Day ${day}` : "Not set"} />
+          <StripItem label={day ? "Server day" : "Opened"} value={day ? `Day ${day}` : settings?.launchMonth ?? "Not set"} />
           <StripItem label="Hero era" value={settings?.heroGeneration ?? "Not set"} />
           <StripItem label="Recruiting" value={settings?.recruitingStatus ?? "Unknown"} />
           <StripItem label="Transfer group" value={settings?.transferGroup ?? "Not set"} />
@@ -108,21 +104,21 @@ export default async function HomePage() {
             description="Every figure below is drawn from records entered by the State 3496 admin team."
           />
           <div className="grid gap-px bg-border sm:grid-cols-2">
-            <DataPoint label="Active alliances" value={alliancesData.length || "—"} />
-            <DataPoint label="Combined power" value={formatPower(totalPower)} />
+            <DataPoint label="Active alliances" value={settings?.activeAllianceCount ?? (alliancesData.filter((alliance) => alliance.kind === "active").length || "—")} />
+            <DataPoint label="Top 100 power" value={formatPower(settings?.top100Power)} />
             <DataPoint label="Open spots" value={openSpots || "—"} />
             <DataPoint
-              label="SvS prep record"
-              value={prepWins + prepLosses ? `${prepWins}W · ${prepLosses}L` : "—"}
+              label="Preparation rating"
+              value={settings?.prepRating ?? "—"}
             />
             <DataPoint
               label="SvS battle record"
               value={battleWins + battleLosses ? `${battleWins}W · ${battleLosses}L` : "—"}
             />
             <DataPoint
-              label="Latest prep score"
-              value={latest?.prepScore ? Number(latest.prepScore).toLocaleString() : "—"}
-              hint={latest ? `vs ${latest.opponent}` : undefined}
+              label="SvS rating"
+              value={settings?.svsRating ?? "—"}
+              hint={settings?.globalRank ? `#${settings.globalRank} of ${settings.rankedStates} states` : undefined}
             />
           </div>
         </Section>

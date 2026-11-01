@@ -41,7 +41,7 @@ export default async function AllianceDetailPage({ params }: PageProps) {
               <div className="flex items-start justify-between">
                 <div>
                   <h1 className="font-display text-3xl font-bold">
-                    [{alliance.tag}] {alliance.name}
+                    [{alliance.tag}] {alliance.name !== alliance.tag ? alliance.name : ""}
                   </h1>
                   <p className="mt-2 text-muted-foreground">{alliance.description}</p>
                 </div>
@@ -49,9 +49,9 @@ export default async function AllianceDetailPage({ params }: PageProps) {
               </div>
 
               <div className="mt-6 flex flex-wrap gap-2">
-                <Tag tone={alliance.recruitingStatus === "open" ? "green" : "muted"}>
+                {alliance.recruitingStatus && <Tag tone={alliance.recruitingStatus === "open" ? "green" : "muted"}>
                   {alliance.recruitingStatus}
-                </Tag>
+                </Tag>}
                 {alliance.playstyle && <Tag tone="muted">{alliance.playstyle}</Tag>}
                 {alliance.timezoneLabel && <Tag tone="muted">{alliance.timezoneLabel}</Tag>}
               </div>
@@ -65,7 +65,7 @@ export default async function AllianceDetailPage({ params }: PageProps) {
                 </div>
                 <div className="rounded-lg border border-border bg-card p-4">
                   <p className="label-mono text-muted-foreground">Open Spots</p>
-                  <p className="mt-1 font-display text-2xl font-bold">{alliance.openSpots}</p>
+                  <p className="mt-1 font-display text-2xl font-bold">{alliance.openSpots ?? "—"}</p>
                 </div>
                 <div className="rounded-lg border border-border bg-card p-4">
                   <p className="label-mono text-muted-foreground">SvS Contribution</p>

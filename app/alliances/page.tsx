@@ -32,7 +32,7 @@ export default async function AlliancesPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-display text-lg font-semibold">
-                      [{alliance.tag}] {alliance.name}
+                      [{alliance.tag}] {alliance.name !== alliance.tag ? alliance.name : ""}
                     </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {alliance.shortDescription}
@@ -42,11 +42,11 @@ export default async function AlliancesPage() {
                 </div>
 
                 <div className="mt-auto flex flex-wrap gap-2">
-                  <Tag tone={alliance.recruitingStatus === "open" ? "green" : "muted"}>
+                  {alliance.recruitingStatus && <Tag tone={alliance.recruitingStatus === "open" ? "green" : "muted"}>
                     {alliance.recruitingStatus}
-                  </Tag>
-                  <Tag tone="muted">{formatPower(alliance.power)}</Tag>
-                  <Tag tone="muted">{alliance.openSpots} spots</Tag>
+                  </Tag>}
+                  {alliance.power != null && <Tag tone="muted">{formatPower(alliance.power)}</Tag>}
+                  {alliance.openSpots != null && <Tag tone="muted">{alliance.openSpots} spots</Tag>}
                 </div>
               </Link>
             ))}

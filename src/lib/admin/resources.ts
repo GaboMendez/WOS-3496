@@ -21,6 +21,13 @@ export const resources = {
   operations_content: { label: "Operations content", table: schema.operationsContent },
   creators: { label: "Creators", table: schema.creators },
   media_assets: { label: "Media assets", table: schema.mediaAssets },
+  players: { label: "Game players", table: schema.players },
+  facilities: { label: "Facilities and territories", table: schema.facilities },
+  rotation_slots: { label: "Rotations and responsibilities", table: schema.rotationSlots },
+  calendar_events: { label: "Event calendar", table: schema.calendarEvents },
+  event_participants: { label: "Event attendance", table: schema.eventParticipants },
+  ranking_snapshots: { label: "Rankings", table: schema.rankingSnapshots },
+  ranking_entries: { label: "Ranking entries", table: schema.rankingEntries },
 } as const;
 
 export type ResourceName = keyof typeof resources;
