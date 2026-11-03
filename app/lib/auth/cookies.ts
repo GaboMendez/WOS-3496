@@ -12,7 +12,7 @@ export async function setAuthToken(token: string): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://") ?? false,
+    secure: process.env.APP_URL?.startsWith("https://") ?? false,
     sameSite: "lax",
     maxAge: AUTH_COOKIE_MAX_AGE,
     path: "/",

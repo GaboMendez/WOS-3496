@@ -49,7 +49,7 @@ Import the repository with the Next.js preset, install with `bun install --froze
 - `DATABASE_URL`: the hosted database's `libsql://` URL.
 - `TURSO_AUTH_TOKEN`: its authentication token.
 - `JWT_SECRET`: a strong random signing secret.
-- `NEXT_PUBLIC_APP_URL`: the site's HTTPS URL.
+- `APP_URL`: the site's HTTPS URL.
 
 Import the populated database into Turso before the first deployment. Turso's file upload requires a WAL-mode SQLite file. Keep seeding separate from builds because it restores the fixed seed values.
 
