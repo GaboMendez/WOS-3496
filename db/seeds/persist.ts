@@ -15,7 +15,7 @@ export async function openSeedDatabase(url: string, mustExist = false) {
     if (mustExist) await access(resolve(url.slice(5)));
     else await mkdir(dirname(resolve(url.slice(5))), { recursive: true });
   }
-  const client = createClient({ url });
+  const client = createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN });
   await client.execute("PRAGMA foreign_keys = ON");
   return { client, database: drizzle(client, { schema }) };
 }

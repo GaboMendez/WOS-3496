@@ -2,7 +2,7 @@
 
 An unofficial community portal for State 3496 in *Whiteout Survival*. The public site presents alliance, governance, transfer, timeline, SvS, operations, and creator information. Staff manage content at `/admin`.
 
-The app runs on Next.js and a local SQLite database. It does not require a hosted database or authentication service.
+The app runs on Next.js with local SQLite or hosted Turso/libSQL. Authentication is handled by the portal.
 
 Visitors can read public pages without signing in. Staff publish records through the admin editor; pages show an empty state when relevant content has not been entered. Dates on the site are shown in UTC, with a local-time toggle for recurring alliance events. Images come from staff-entered URLs or the default fortress artwork. The layout supports phones, tablets, and desktops.
 
@@ -42,15 +42,26 @@ bun run start
 
 Remove `.next` first if you want to clear the build cache. Keep `data/portal.db` and `.env.local` to preserve content and JWT signing continuity. Use `bun run dev` instead of `bun run start` while editing code.
 
+## Deploy to Vercel
+
+Import the repository with the Next.js preset, install with `bun install --frozen-lockfile` and build with `bun run build`. Configure these environment variables before deploying:
+
+- `DATABASE_URL`: the hosted database's `libsql://` URL.
+- `TURSO_AUTH_TOKEN`: its authentication token.
+- `JWT_SECRET`: a strong random signing secret.
+- `NEXT_PUBLIC_APP_URL`: the site's HTTPS URL.
+
+Import the populated database into Turso before the first deployment. Turso's file upload requires a WAL-mode SQLite file. Keep seeding separate from builds because it restores the fixed seed values.
+
 ## Stack and layout
 
 | Area | Implementation |
 | --- | --- |
 | Web app | Next.js 15 App Router, React 19, TypeScript |
-| Database | Local SQLite through `@libsql/client` and Drizzle ORM |
+| Database | SQLite or Turso/libSQL through `@libsql/client` and Drizzle ORM |
 | Authentication | Salted scrypt password hashes and signed HTTP-only cookies |
 | UI | Tailwind CSS 3, Radix UI, Lucide icons, Recharts where data exists |
-| Runtime | Bun for scripts; Next.js server with a persistent local disk |
+| Runtime | Bun for scripts; Next.js server |
 
 ```text
 app/                  Next.js pages and route handlers
@@ -64,7 +75,7 @@ public/images/        Default hero artwork
 data/                 Local database and backups (ignored by Git)
 ```
 
-Public pages query SQLite on the server. Content edits can appear without rebuilding. The app needs a server process and persistent storage; it is not a static export.
+Public pages query the database on the server. Content edits can appear without rebuilding. Local SQLite requires persistent disk; use Turso for Vercel deployments.
 
 ## Public pages
 
@@ -136,7 +147,7 @@ Admin and editor access is enforced in the Next.js API, rather than by database 
 
 ## Database and content
 
-The default database is `data/portal.db`. Set `DATABASE_URL` to another `file:` URL if you need a different local SQLite file. The directory containing the file must exist.
+The default database is `data/portal.db`. Set `DATABASE_URL` to a `file:` URL for local SQLite, or a `libsql://` URL with `TURSO_AUTH_TOKEN` for Turso. Drizzle commands select the matching dialect from the URL. The directory containing a local database file must exist.
 
 | Group | Tables |
 | --- | --- |

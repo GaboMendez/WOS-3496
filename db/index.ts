@@ -5,6 +5,7 @@ import * as schema from "./schema";
 // Create SQLite client using libsql (works with Next.js)
 const client = createClient({
   url: process.env.DATABASE_URL || "file:data/portal.db",
+  authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
 // Create Drizzle instance

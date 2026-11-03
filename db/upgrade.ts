@@ -1,7 +1,10 @@
 import { createClient } from "@libsql/client";
 import { migrateLegacyDatabase } from "./upgrade-schema";
 
-const client = createClient({ url: process.env.DATABASE_URL || "file:data/portal.db" });
+const client = createClient({
+  url: process.env.DATABASE_URL || "file:data/portal.db",
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
 try {
   const tables = await client.execute("SELECT name FROM sqlite_master WHERE type = 'table'");
