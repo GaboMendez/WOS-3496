@@ -2,7 +2,7 @@ import { input, password } from "@inquirer/prompts";
 import { eq } from "drizzle-orm";
 import { db } from "./index";
 import { profiles, userRoles } from "./schema";
-import { hashPassword } from "../src/lib/auth/password";
+import { hashPassword } from "../app/lib/auth/password";
 
 const email = (await input({ message: "Admin email:" })).trim().toLowerCase();
 if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Enter a valid email address.");

@@ -68,9 +68,9 @@ app/                  Next.js pages and route handlers
 app/globals.css       Shared semantic color tokens and utilities
 db/                   SQLite schema, connection, seed, and admin bootstrap
 drizzle/sqlite/        SQLite migrations
-src/components/site/  Shared public layout and page primitives
-src/components/ui/    UI components
-src/lib/              Data queries, authentication, and formatting
+app/components/site/  Shared public layout and page primitives
+app/components/ui/    UI components
+app/lib/              Data queries, authentication, and formatting
 public/images/        Default hero artwork
 data/                 Local database and backups (ignored by Git)
 ```
@@ -163,7 +163,7 @@ The default database is `data/portal.db`. Set `DATABASE_URL` to a `file:` URL fo
 
 Only published records are returned by the main public content queries; governance accepts `active` and `published` status. Editors can manage drafts through the admin API. Media assets store URLs; there is no file upload workflow. Use the admin editor for ongoing content changes. `db:seed` is idempotent and restores the fixed values of seeded records.
 
-Formatting helpers in `src/lib/state.ts` calculate server day from the UTC launch date, abbreviate power (for example, `1.2B` or `345.6M`), format UTC dates, and convert an alliance event's `HH:MM` UTC time to the visitor's local time. The root layout supplies site-wide page and social metadata; transfer detail pages supply their own titles and descriptions. Admin pages are marked for no indexing.
+Formatting helpers in `app/lib/state.ts` calculate server day from the UTC launch date, abbreviate power (for example, `1.2B` or `345.6M`), format UTC dates, and convert an alliance event's `HH:MM` UTC time to the visitor's local time. The root layout supplies site-wide page and social metadata; transfer detail pages supply their own titles and descriptions. Admin pages are marked for no indexing.
 
 ### Database commands
 
@@ -182,7 +182,7 @@ Back up `data/portal.db` before manual schema changes. The seed restores its kno
 
 ## Visual system
 
-Public pages use the shared tactical dark palette in `app/globals.css` and Tailwind mapping in `tailwind.config.js`. Keep new screens on the semantic tokens `background`, `card`, `surface`, `foreground`, `muted`, `border`, `primary`/`gold`, `steel`, and `ember`. The shared `SiteLayout`, header, footer, and page primitives are in `src/components/site`.
+Public pages use the shared tactical dark palette in `app/globals.css` and Tailwind mapping in `tailwind.config.js`. Keep new screens on the semantic tokens `background`, `card`, `surface`, `foreground`, `muted`, `border`, `primary`/`gold`, `steel`, and `ember`. The shared `SiteLayout`, header, footer, and page primitives are in `app/components/site`.
 
 JetBrains Mono is used for headings, labels, and data readouts; Work Sans is used for body text. Both are loaded by `app/layout.tsx`. Shared CSS utilities include `label-mono`, `data-mono`, `surface`, and `hero-scrim`. The layout adapts to mobile screens and lets wide tables scroll.
 
@@ -196,7 +196,7 @@ JetBrains Mono is used for headings, labels, and data readouts; Work Sans is use
 | `border`, `input`, `ring` | Dividers, controls, and keyboard focus |
 | `hero-scrim` | Dark overlay that keeps text readable on the hero image |
 
-The shared header has the 3496 badge, public navigation, an optional Discord button, and a mobile menu. The footer reads social links and the community disclaimer from State settings. `src/components/site/primitives.tsx` provides section headings, data readouts, empty and loading states, error notes, and status tags. The default hero image is `public/images/state-hero.jpg` and can be replaced from State settings.
+The shared header has the 3496 badge, public navigation, an optional Discord button, and a mobile menu. The footer reads social links and the community disclaimer from State settings. `app/components/site/primitives.tsx` provides section headings, data readouts, empty and loading states, error notes, and status tags. The default hero image is `public/images/state-hero.jpg` and can be replaced from State settings.
 
 ## Commands and verification
 
