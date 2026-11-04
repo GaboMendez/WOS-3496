@@ -6,7 +6,10 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.startsWith("your-")) {
   try {
     const lines = readFileSync(new URL(".env.local", import.meta.url), "utf8").split(/\r?\n/);
     const entry = lines.find((line) => /^\s*JWT_SECRET\s*=/.test(line));
-    const value = entry?.replace(/^\s*JWT_SECRET\s*=\s*/, "").trim().replace(/^(['"])(.*)\1$/, "$2");
+    const value = entry
+      ?.replace(/^\s*JWT_SECRET\s*=\s*/, "")
+      .trim()
+      .replace(/^(['"])(.*)\1$/, "$2");
     if (value && value.length >= 32 && !value.startsWith("your-")) {
       process.env.JWT_SECRET = value;
     }
@@ -17,6 +20,8 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.startsWith("your-")) {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Allow verification alongside a running dev server on Windows.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   reactStrictMode: true,
   transpilePackages: ["lucide-react"],
   images: {

@@ -13,6 +13,22 @@ import { sql } from "drizzle-orm";
 export const appRoleEnum = ["admin", "editor", "viewer"] as const;
 export type AppRole = (typeof appRoleEnum)[number];
 
+// One last-good external snapshot; independent of all staff-managed content.
+export const sourceSync = sqliteTable("source_sync", {
+  id: text("id").primaryKey(),
+  payload: text("payload"),
+  pendingPayload: text("pending_payload"),
+  status: text("status", { enum: ["idle", "ready", "collecting", "error", "blocked"] })
+    .notNull()
+    .default("idle"),
+  lastAttemptAt: integer("last_attempt_at"),
+  lastSuccessAt: integer("last_success_at"),
+  nextAllowedAt: integer("next_allowed_at").notNull().default(0),
+  leaseToken: text("lease_token"),
+  leaseExpiresAt: integer("lease_expires_at").notNull().default(0),
+  lastError: text("last_error"),
+});
+
 // Tables
 
 // Alliance leaders
