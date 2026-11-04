@@ -1,40 +1,34 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MessageCircle, Shield, Map as MapIcon } from "lucide-react";
-import {
-  getStateSettings,
-  getAlliances,
-  getSvsCycles,
-  getFeaturedCreators,
-} from "@/lib/actions";
-import {
-  calculateServerDay,
-  formatPower,
-  formatUtcDate,
-  formatUtcDateTime,
-} from "@/lib/state";
+import { getStateSettings, getAlliances, getSvsCycles, getFeaturedCreators } from "@/lib/actions";
+import { calculateServerDay, formatPower, formatUtcDate, formatUtcDateTime } from "@/lib/state";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import {
-  Section,
-  SectionHeading,
-  DataPoint,
-  EmptyState,
-  Tag,
-} from "@/components/site/primitives";
+import { SourceNote } from "@/components/site/SourceNote";
+import { getSourceData } from "@/lib/wosguru/server";
+import { Section, SectionHeading, DataPoint, EmptyState, Tag } from "@/components/site/primitives";
 
 export default async function HomePage() {
   // Fetch data on the server
-  const [settings, alliancesData, svsData, creatorsData] = await Promise.all([
+  const [settings, alliancesData, svsData, creatorsData, source] = await Promise.all([
     getStateSettings(),
     getAlliances(true),
     getSvsCycles(true),
     getFeaturedCreators(),
+    getSourceData(),
   ]);
+
+  const observed = source.snapshot;
+  const metrics = observed?.state;
 
   const day = calculateServerDay(settings?.launchDate || null);
   const openSpots = alliancesData.reduce((sum, a) => sum + Number(a.openSpots ?? 0), 0);
-  const battleWins = svsData.filter((c) => c.battleResult === "win").length;
-  const battleLosses = svsData.filter((c) => c.battleResult === "loss").length;
+  const battleWins = observed
+    ? observed.svs.filter((c) => c.result === "win").length
+    : svsData.filter((c) => c.battleResult === "win").length;
+  const battleLosses = observed
+    ? observed.svs.filter((c) => c.result === "loss").length
+    : svsData.filter((c) => c.battleResult === "loss").length;
 
   return (
     <SiteLayout settings={settings}>
@@ -87,12 +81,30 @@ export default async function HomePage() {
       {/* status strip */}
       <div className="border-b border-border bg-card">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap gap-x-8 gap-y-3 px-4 py-4 sm:px-6">
-          <StripItem label={day ? "Server day" : "Opened"} value={day ? `Day ${day}` : settings?.launchMonth ?? "Not set"} />
-          <StripItem label="Hero era" value={settings?.heroGeneration ?? "Not set"} />
+          <StripItem
+            label={day ? "Server day" : "Opened"}
+            value={day ? `Day ${day}` : (settings?.launchMonth ?? "Not set")}
+          />
+          <StripItem
+            label="Hero era"
+            value={
+              metrics?.heroGeneration
+                ? `Generation ${metrics.heroGeneration}`
+                : (settings?.heroGeneration ?? "Not set")
+            }
+          />
           <StripItem label="Recruiting" value={settings?.recruitingStatus ?? "Unknown"} />
-          <StripItem label="Transfer group" value={settings?.transferGroup ?? "Not set"} />
+          <StripItem
+            label="Transfer group"
+            value={
+              metrics ? `Group ${metrics.transferGroup}` : (settings?.transferGroup ?? "Not set")
+            }
+          />
           <StripItem label="Times shown in" value={settings?.timezone ?? "UTC"} />
-          <StripItem label="Last updated" value={formatUtcDateTime(settings?.updatedAt ?? null)} />
+          <StripItem
+            label="Portal updated"
+            value={formatUtcDateTime(settings?.updatedAt ?? null)}
+          />
         </div>
       </div>
 
@@ -101,15 +113,28 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="State at a glance"
             title="Current state metrics"
-            description="Every figure below is drawn from records entered by the State 3496 admin team."
+            description={
+              observed
+                ? "State ratings and battle records from WOS Guru. Alliance and recruitment details are maintained by our admin team."
+                : "Every figure below is drawn from records entered by the State 3496 admin team."
+            }
           />
           <div className="grid gap-px bg-border sm:grid-cols-2">
-            <DataPoint label="Active alliances" value={settings?.activeAllianceCount ?? (alliancesData.filter((alliance) => alliance.kind === "active").length || "—")} />
-            <DataPoint label="Top 100 power" value={formatPower(settings?.top100Power)} />
+            <DataPoint
+              label="Active alliances"
+              value={
+                settings?.activeAllianceCount ??
+                (alliancesData.filter((alliance) => alliance.kind === "active").length || "—")
+              }
+            />
+            <DataPoint
+              label="Top 100 power"
+              value={formatPower(metrics?.top100Power ?? settings?.top100Power)}
+            />
             <DataPoint label="Open spots" value={openSpots || "—"} />
             <DataPoint
               label="Preparation rating"
-              value={settings?.prepRating ?? "—"}
+              value={metrics?.prepRating ?? settings?.prepRating ?? "—"}
             />
             <DataPoint
               label="SvS battle record"
@@ -117,10 +142,30 @@ export default async function HomePage() {
             />
             <DataPoint
               label="SvS rating"
-              value={settings?.svsRating ?? "—"}
-              hint={settings?.globalRank ? `#${settings.globalRank} of ${settings.rankedStates} states` : undefined}
+              value={metrics?.svsRating ?? settings?.svsRating ?? "—"}
+              hint={
+                metrics
+                  ? `#${metrics.globalRank} of ${metrics.rankedStates} states`
+                  : settings?.globalRank
+                    ? `#${settings.globalRank} of ${settings.rankedStates} states`
+                    : undefined
+              }
             />
           </div>
+          {observed ? (
+            <SourceNote
+              snapshot={observed}
+              failed={source.status === "error" || source.status === "blocked"}
+              link
+            />
+          ) : (
+            <Link
+              href="/intelligence"
+              className="mt-4 inline-block text-sm text-steel hover:underline"
+            >
+              State intelligence →
+            </Link>
+          )}
         </Section>
 
         <Section className="min-w-0 bg-background lg:order-4 lg:col-span-6 lg:px-6 lg:py-8">
@@ -198,6 +243,11 @@ export default async function HomePage() {
                 { href: "/operations", label: "Operations", hint: "Rally and comms roles" },
                 { href: "/timeline", label: "Timeline", hint: "Server progression" },
                 { href: "/transfers", label: "Transfers", hint: "Windows and routes" },
+                {
+                  href: "/intelligence",
+                  label: "Intelligence",
+                  hint: "Ratings, alliance power and player rankings",
+                },
               ].map((l) => (
                 <Link
                   key={l.href}

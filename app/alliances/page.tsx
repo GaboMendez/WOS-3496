@@ -5,11 +5,14 @@ import { getStateSettings } from "@/lib/actions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Section, SectionHeading, Tag } from "@/components/site/primitives";
 import { formatPower } from "@/lib/state";
+import { getSourceData } from "@/lib/wosguru/server";
+import { SourceNote } from "@/components/site/SourceNote";
 
 export default async function AlliancesPage() {
-  const [settings, alliancesData] = await Promise.all([
+  const [settings, alliancesData, source] = await Promise.all([
     getStateSettings(),
     getAlliances(true),
+    getSourceData(),
   ]);
 
   return (
@@ -42,20 +45,36 @@ export default async function AlliancesPage() {
                 </div>
 
                 <div className="mt-auto flex flex-wrap gap-2">
-                  {alliance.recruitingStatus && <Tag tone={alliance.recruitingStatus === "open" ? "green" : "muted"}>
-                    {alliance.recruitingStatus}
-                  </Tag>}
+                  {alliance.recruitingStatus && (
+                    <Tag tone={alliance.recruitingStatus === "open" ? "green" : "muted"}>
+                      {alliance.recruitingStatus}
+                    </Tag>
+                  )}
                   {alliance.power != null && <Tag tone="muted">{formatPower(alliance.power)}</Tag>}
+                  {alliance.power == null &&
+                    source.snapshot?.alliances.find((row) => row.tag === alliance.tag) && (
+                      <Tag tone="muted">
+                        Source power:{" "}
+                        {formatPower(
+                          source.snapshot.alliances.find((row) => row.tag === alliance.tag)!.power,
+                        )}
+                      </Tag>
+                    )}
                   {alliance.openSpots != null && <Tag tone="muted">{alliance.openSpots} spots</Tag>}
                 </div>
               </Link>
             ))}
           </div>
+          {source.snapshot && (
+            <SourceNote
+              snapshot={source.snapshot}
+              failed={source.status === "error" || source.status === "blocked"}
+              link
+            />
+          )}
 
           {alliancesData.length === 0 && (
-            <p className="mt-4 text-center text-muted-foreground">
-              No alliances found.
-            </p>
+            <p className="mt-4 text-center text-muted-foreground">No alliances found.</p>
           )}
         </Section>
       </div>
