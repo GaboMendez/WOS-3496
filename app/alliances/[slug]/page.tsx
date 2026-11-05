@@ -23,6 +23,7 @@ export default async function AllianceDetailPage({ params }: PageProps) {
   }
 
   const [leaders, events] = await Promise.all([getAllianceLeaders(alliance.id), getAllianceEvents(alliance.id)]);
+  const currentStats = alliance.sourceObservedAt != null && alliance.sourceObservedAt === settings?.sourceObservedAt;
 
   return (
     <SiteLayout settings={settings}>
@@ -60,7 +61,7 @@ export default async function AllianceDetailPage({ params }: PageProps) {
                 <div className="rounded-lg border border-border bg-card p-4">
                   <p className="label-mono text-muted-foreground">Power</p>
                   <p className="mt-1 font-display text-2xl font-bold">
-                    {formatPower(alliance.power)}
+                    {formatPower(alliance.power ?? (currentStats ? alliance.sourcePower : null))}
                   </p>
                 </div>
                 <div className="rounded-lg border border-border bg-card p-4">
@@ -75,6 +76,17 @@ export default async function AllianceDetailPage({ params }: PageProps) {
                 </div>
               </div>
 
+              {currentStats && alliance.sourceRank != null && (
+                <div className="mt-8 border border-border bg-card p-4">
+                  <h2 className="font-display text-lg font-semibold">Alliance statistics</h2>
+                  <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    <div><dt className="label-mono text-muted-foreground">Rank</dt><dd>{alliance.sourceRank}</dd></div>
+                    <div><dt className="label-mono text-muted-foreground">Members</dt><dd>{alliance.sourceMembers ?? "—"}</dd></div>
+                    <div><dt className="label-mono text-muted-foreground">Median furnace</dt><dd>{alliance.sourceMedianFurnace ?? "—"}</dd></div>
+                    <div><dt className="label-mono text-muted-foreground">Castle wins</dt><dd>{alliance.sourceCastleWins ?? "—"}</dd></div>
+                  </dl>
+                </div>
+              )}
               {alliance.discordUrl && (
                 <div className="mt-8">
                   <a

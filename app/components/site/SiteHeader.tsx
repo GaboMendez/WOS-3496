@@ -9,7 +9,6 @@ import { Button } from "../ui/button";
 const NAV = [
   { href: "/", label: "Home" },
   { href: "/alliances", label: "Alliances" },
-  { href: "/intelligence", label: "Intelligence" },
   { href: "/governance", label: "Governance" },
   { href: "/transfers", label: "Transfers" },
   { href: "/timeline", label: "Timeline" },

@@ -10,12 +10,28 @@ type Status = {
   nextAllowedAt: number;
   players: number;
   alliances: number;
+  nativeIssues?: string | null;
 };
+
+function parseIssues(value: string | null | undefined) {
+  try {
+    const parsed: unknown = value ? JSON.parse(value) : null;
+    if (!parsed || typeof parsed !== "object") return null;
+    const issue = parsed as { missingChiefIds?: unknown; unresolved?: unknown };
+    return {
+      missingChiefIds: typeof issue.missingChiefIds === "number" ? issue.missingChiefIds : 0,
+      unresolved: Array.isArray(issue.unresolved) ? issue.unresolved.filter((value): value is string => typeof value === "string") : [],
+    };
+  } catch {
+    return null;
+  }
+}
 
 export function SourceRefresh() {
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const issues = parseIssues(status?.nativeIssues);
 
   async function load() {
     const response = await fetch("/api/admin/wosguru", { cache: "no-store" });
@@ -75,9 +91,15 @@ export function SourceRefresh() {
               {message || status?.lastError}
             </p>
           )}
+          {issues && (issues.missingChiefIds > 0 || issues.unresolved.length > 0) && (
+            <div className="mt-3 text-sm text-ember" role="status">
+              {issues.missingChiefIds > 0 && <p>{issues.missingChiefIds} player records lack a Chief ID and need identity review.</p>}
+              {issues.unresolved.length > 0 && <p>Records needing review: {issues.unresolved.join(", ")}</p>}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/intelligence" className="text-sm text-steel hover:underline">
+          <Link href="/#state-data" className="text-sm text-steel hover:underline">
             View data
           </Link>
           <button

@@ -1,34 +1,30 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MessageCircle, Shield, Map as MapIcon } from "lucide-react";
-import { getStateSettings, getAlliances, getSvsCycles, getFeaturedCreators } from "@/lib/actions";
+import { getStateSettings, getAlliances, getSvsCycles, getFeaturedCreators, getStateObservations } from "@/lib/actions";
 import { calculateServerDay, formatPower, formatUtcDate, formatUtcDateTime } from "@/lib/state";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { SourceNote } from "@/components/site/SourceNote";
-import { getSourceData } from "@/lib/wosguru/server";
+import { groupSourceSections } from "@/lib/wosguru/placement";
+import { SourceOverview } from "@/components/site/SourceData";
+import { SourceSections } from "@/intelligence/SourceSections";
 import { Section, SectionHeading, DataPoint, EmptyState, Tag } from "@/components/site/primitives";
 
 export default async function HomePage() {
   // Fetch data on the server
-  const [settings, alliancesData, svsData, creatorsData, source] = await Promise.all([
+  const [settings, alliancesData, svsData, creatorsData, observed] = await Promise.all([
     getStateSettings(),
     getAlliances(true),
     getSvsCycles(true),
     getFeaturedCreators(),
-    getSourceData(),
+    getStateObservations(),
   ]);
 
-  const observed = source.snapshot;
-  const metrics = observed?.state;
 
   const day = calculateServerDay(settings?.launchDate || null);
   const openSpots = alliancesData.reduce((sum, a) => sum + Number(a.openSpots ?? 0), 0);
-  const battleWins = observed
-    ? observed.svs.filter((c) => c.result === "win").length
-    : svsData.filter((c) => c.battleResult === "win").length;
-  const battleLosses = observed
-    ? observed.svs.filter((c) => c.result === "loss").length
-    : svsData.filter((c) => c.battleResult === "loss").length;
+  const battleWins = svsData.filter((c) => (c.battleResult ?? c.sourceBattleResult) === "win").length;
+  const battleLosses = svsData.filter((c) => (c.battleResult ?? c.sourceBattleResult) === "loss").length;
 
   return (
     <SiteLayout settings={settings}>
@@ -88,16 +84,20 @@ export default async function HomePage() {
           <StripItem
             label="Hero era"
             value={
-              metrics?.heroGeneration
-                ? `Generation ${metrics.heroGeneration}`
-                : (settings?.heroGeneration ?? "Not set")
+              settings?.heroGeneration ??
+              (settings?.sourceHeroGeneration != null
+                ? `Generation ${settings.sourceHeroGeneration}`
+                : "Not set")
             }
           />
           <StripItem label="Recruiting" value={settings?.recruitingStatus ?? "Unknown"} />
           <StripItem
             label="Transfer group"
             value={
-              metrics ? `Group ${metrics.transferGroup}` : (settings?.transferGroup ?? "Not set")
+              settings?.transferGroup ??
+              (settings?.sourceTransferGroup != null
+                ? `Group ${settings.sourceTransferGroup}`
+                : "Not set")
             }
           />
           <StripItem label="Times shown in" value={settings?.timezone ?? "UTC"} />
@@ -113,11 +113,7 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="State at a glance"
             title="Current state metrics"
-            description={
-              observed
-                ? "State ratings and battle records from WOS Guru. Alliance and recruitment details are maintained by our admin team."
-                : "Every figure below is drawn from records entered by the State 3496 admin team."
-            }
+            description="State ratings, battle records and alliance activity at a glance."
           />
           <div className="grid gap-px bg-border sm:grid-cols-2">
             <DataPoint
@@ -129,12 +125,12 @@ export default async function HomePage() {
             />
             <DataPoint
               label="Top 100 power"
-              value={formatPower(metrics?.top100Power ?? settings?.top100Power)}
+              value={formatPower(settings?.top100Power ?? settings?.sourceTop100Power)}
             />
             <DataPoint label="Open spots" value={openSpots || "—"} />
             <DataPoint
               label="Preparation rating"
-              value={metrics?.prepRating ?? settings?.prepRating ?? "—"}
+              value={settings?.prepRating ?? settings?.sourcePrepRating ?? "—"}
             />
             <DataPoint
               label="SvS battle record"
@@ -142,30 +138,20 @@ export default async function HomePage() {
             />
             <DataPoint
               label="SvS rating"
-              value={metrics?.svsRating ?? settings?.svsRating ?? "—"}
+              value={settings?.svsRating ?? settings?.sourceSvsRating ?? "—"}
               hint={
-                metrics
-                  ? `#${metrics.globalRank} of ${metrics.rankedStates} states`
-                  : settings?.globalRank
-                    ? `#${settings.globalRank} of ${settings.rankedStates} states`
-                    : undefined
+                (settings?.globalRank ?? settings?.sourceGlobalRank) != null
+                  ? `#${settings?.globalRank ?? settings?.sourceGlobalRank} of ${settings?.rankedStates ?? settings?.sourceRankedStates ?? "—"} states`
+                  : undefined
               }
             />
           </div>
           {observed ? (
             <SourceNote
               snapshot={observed}
-              failed={source.status === "error" || source.status === "blocked"}
               link
             />
-          ) : (
-            <Link
-              href="/intelligence"
-              className="mt-4 inline-block text-sm text-steel hover:underline"
-            >
-              State intelligence →
-            </Link>
-          )}
+          ) : null}
         </Section>
 
         <Section className="min-w-0 bg-background lg:order-4 lg:col-span-6 lg:px-6 lg:py-8">
@@ -190,7 +176,7 @@ export default async function HomePage() {
                     <Th>Prep</Th>
                     <Th>Battle</Th>
                     <Th>Score</Th>
-                    <Th>Story</Th>
+                    <Th>Details</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -202,7 +188,7 @@ export default async function HomePage() {
                         <ResultTag value={c.prepResult} />
                       </Td>
                       <Td>
-                        <ResultTag value={c.battleResult} />
+                        <ResultTag value={c.battleResult ?? c.sourceBattleResult} />
                       </Td>
                       <Td className="data-mono">
                         {c.battleScore != null && c.opponentBattleScore != null
@@ -211,7 +197,7 @@ export default async function HomePage() {
                       </Td>
                       <Td>
                         <Link href={`/svs/${c.slug}`} className="text-steel hover:underline">
-                          Read
+                          View
                         </Link>
                       </Td>
                     </tr>
@@ -244,9 +230,9 @@ export default async function HomePage() {
                 { href: "/timeline", label: "Timeline", hint: "Server progression" },
                 { href: "/transfers", label: "Transfers", hint: "Windows and routes" },
                 {
-                  href: "/intelligence",
-                  label: "Intelligence",
-                  hint: "Ratings, alliance power and player rankings",
+                  href: "/community#players",
+                  label: "Player rankings",
+                  hint: "Player power and furnace levels",
                 },
               ].map((l) => (
                 <Link
@@ -308,6 +294,10 @@ export default async function HomePage() {
           )}
         </Section>
       </div>
+      {observed && settings && <>
+        <SourceOverview snapshot={observed} settings={settings} />
+        <SourceSections sections={groupSourceSections(observed.sections).overview} />
+      </>}
     </SiteLayout>
   );
 }

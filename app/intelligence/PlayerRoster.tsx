@@ -1,14 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { SourcePlayer, WosguruSnapshot } from "@/lib/wosguru/model";
 import { furnaceLabel } from "@/lib/wosguru/format";
+
+type RosterPlayer = SourcePlayer & { allianceSlug?: string | null };
 
 export function PlayerRoster({
   players,
   furnacePlayers,
 }: {
-  players: SourcePlayer[];
+  players: RosterPlayer[];
   furnacePlayers: WosguruSnapshot["furnacePlayers"];
 }) {
   const [query, setQuery] = useState("");
@@ -16,7 +19,7 @@ export function PlayerRoster({
   const [furnace, setFurnace] = useState("");
   const [mode, setMode] = useState("power");
   const [page, setPage] = useState(1);
-  const source = useMemo<SourcePlayer[]>(
+  const source = useMemo<RosterPlayer[]>(
     () =>
       mode === "power"
         ? players
@@ -116,7 +119,7 @@ export function PlayerRoster({
             setPage(1);
           }}
         >
-          <option value="power">Source power rankings</option>
+          <option value="power">Power rankings</option>
           <option value="furnace" disabled={!furnacePlayers.length}>
             Every furnace record
           </option>
@@ -125,7 +128,7 @@ export function PlayerRoster({
       <p className="mb-3 text-xs text-muted-foreground" role="status">
         {filtered.length.toLocaleString()} matching records ·{" "}
         {mode === "power"
-          ? "Ranks come from the source roster."
+          ? "Ranks reflect the power leaderboard."
           : "Entry numbers order the furnace records by exact power."}{" "}
         Approximate values are marked ≈.
       </p>
@@ -153,7 +156,13 @@ export function PlayerRoster({
                 <td className="data-mono px-4 py-3">{row.rank}</td>
                 <td className="px-4 py-3">{row.name}</td>
                 <td className="data-mono px-4 py-3 text-muted-foreground">{row.chiefId ?? "—"}</td>
-                <td className="px-4 py-3">{row.allianceTag ?? "—"}</td>
+                <td className="px-4 py-3">
+                  {row.allianceTag && row.allianceSlug ? (
+                    <Link className="text-steel hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" href={`/alliances/${row.allianceSlug}`}>
+                      {row.allianceTag}
+                    </Link>
+                  ) : row.allianceTag ?? "—"}
+                </td>
                 <td className="data-mono px-4 py-3">{row.furnaceLevel || "—"}</td>
                 <td className="data-mono whitespace-nowrap px-4 py-3">
                   {row.exactPower === null ? "≈ " : ""}

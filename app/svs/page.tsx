@@ -1,18 +1,21 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { getSvsCycles, getStateSettings } from "@/lib/actions";
+import { getSvsCycles, getStateObservations, getStateSettings } from "@/lib/actions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Section, SectionHeading, Tag, EmptyState } from "@/components/site/primitives";
 import { formatUtcDate } from "@/lib/state";
+import { groupSourceSections } from "@/lib/wosguru/placement";
+import { SourceSections } from "@/intelligence/SourceSections";
 
 export default async function SvsPage() {
-  const [settings, svsData] = await Promise.all([
+  const [settings, svsData, observed] = await Promise.all([
     getStateSettings(),
     getSvsCycles(true),
+    getStateObservations(),
   ]);
 
-  const wins = svsData.filter((c) => c.battleResult === "win").length;
-  const losses = svsData.filter((c) => c.battleResult === "loss").length;
+  const wins = svsData.filter((c) => (c.battleResult ?? c.sourceBattleResult) === "win").length;
+  const losses = svsData.filter((c) => (c.battleResult ?? c.sourceBattleResult) === "loss").length;
 
   return (
     <SiteLayout settings={settings}>
@@ -50,6 +53,7 @@ export default async function SvsPage() {
                     <th className="label-mono px-4 py-3 font-normal">Date</th>
                     <th className="label-mono px-4 py-3 font-normal">Prep</th>
                     <th className="label-mono px-4 py-3 font-normal">Battle</th>
+                    <th className="label-mono px-4 py-3 font-normal">Side</th>
                     <th className="label-mono px-4 py-3 font-normal">Score</th>
                     <th className="label-mono px-4 py-3 font-normal"></th>
                   </tr>
@@ -65,10 +69,11 @@ export default async function SvsPage() {
                         </Tag>
                       </td>
                       <td className="px-4 py-3">
-                        <Tag tone={cycle.battleResult === "win" ? "green" : cycle.battleResult === "loss" ? "red" : "muted"}>
-                          {cycle.battleResult || "—"}
+                        <Tag tone={(cycle.battleResult ?? cycle.sourceBattleResult) === "win" ? "green" : (cycle.battleResult ?? cycle.sourceBattleResult) === "loss" ? "red" : "muted"}>
+                          {cycle.battleResult ?? cycle.sourceBattleResult ?? "—"}
                         </Tag>
                       </td>
+                      <td className="px-4 py-3">{cycle.sourceSide ?? "—"}</td>
                       <td className="data-mono px-4 py-3">
                         {cycle.battleScore != null && cycle.opponentBattleScore != null
                           ? `${Number(cycle.battleScore).toLocaleString()} - ${Number(cycle.opponentBattleScore).toLocaleString()}`
@@ -79,7 +84,7 @@ export default async function SvsPage() {
                           href={`/svs/${cycle.slug}`}
                           className="inline-flex items-center gap-1 text-steel hover:underline"
                         >
-                          Story <ArrowRight className="size-3" />
+                          Details <ArrowRight className="size-3" />
                         </Link>
                       </td>
                     </tr>
@@ -90,6 +95,7 @@ export default async function SvsPage() {
           )}
         </Section>
       </div>
+      {observed && <SourceSections sections={groupSourceSections(observed.sections).svs} />}
     </SiteLayout>
   );
 }

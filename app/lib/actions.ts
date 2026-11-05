@@ -4,6 +4,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { db } from "../../db";
 import {
   alliances,
+  players,
   allianceLeaders,
   allianceEvents,
   svsCycles,
@@ -29,7 +30,13 @@ import {
   type TransferGuide,
   type TransferGroup,
 } from "../../db/schema";
-import { eq, desc, asc, and, inArray } from "drizzle-orm";
+import { eq, desc, asc, and, inArray, isNotNull } from "drizzle-orm";
+import { readObservedData } from "@/lib/wosguru/observations";
+
+export async function getStateObservations() {
+  noStore();
+  return readObservedData(db);
+}
 
 // State Settings
 export async function getStateSettings(): Promise<StateSetting | null> {
@@ -39,6 +46,20 @@ export async function getStateSettings(): Promise<StateSetting | null> {
 }
 
 // Alliances
+export async function getRankedPlayers(observedAt: string | null) {
+  if (!observedAt) return [];
+  const [ranked, publishedAlliances] = await Promise.all([
+    db.select().from(players).where(and(isNotNull(players.sourceRank), eq(players.sourceObservedAt, observedAt))).orderBy(asc(players.sourceRank)),
+    db.select({ id: alliances.id, tag: alliances.tag, slug: alliances.slug }).from(alliances).where(eq(alliances.published, true)),
+  ]);
+  const tags = new Map(publishedAlliances.map((alliance) => [alliance.id, alliance.tag]));
+  const slugs = new Map(publishedAlliances.map((alliance) => [alliance.id, alliance.slug]));
+  return ranked.map((player) => ({ ...player, effectiveAllianceTag: player.allianceId
+    ? tags.get(player.allianceId) ?? null
+    : (player.sourceAllianceId ? tags.get(player.sourceAllianceId) : null) ?? player.sourceAllianceTag,
+    effectiveAllianceSlug: slugs.get(player.allianceId ?? player.sourceAllianceId ?? "") ?? null }));
+}
+
 export async function getAlliances(published = true): Promise<Alliance[]> {
   const query = db.select().from(alliances).orderBy(asc(alliances.sortRank));
   if (published) {

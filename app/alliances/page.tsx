@@ -1,18 +1,17 @@
 import Link from "next/link";
 import { Shield } from "lucide-react";
-import { getAlliances } from "@/lib/actions";
+import { getAlliances, getStateObservations } from "@/lib/actions";
 import { getStateSettings } from "@/lib/actions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Section, SectionHeading, Tag } from "@/components/site/primitives";
 import { formatPower } from "@/lib/state";
-import { getSourceData } from "@/lib/wosguru/server";
 import { SourceNote } from "@/components/site/SourceNote";
 
 export default async function AlliancesPage() {
-  const [settings, alliancesData, source] = await Promise.all([
+  const [settings, alliancesData, observed] = await Promise.all([
     getStateSettings(),
     getAlliances(true),
-    getSourceData(),
+    getStateObservations(),
   ]);
 
   return (
@@ -26,7 +25,9 @@ export default async function AlliancesPage() {
           />
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {alliancesData.map((alliance) => (
+            {alliancesData.map((alliance) => {
+              const current = alliance.sourceObservedAt != null && alliance.sourceObservedAt === settings?.sourceObservedAt;
+              return (
               <Link
                 key={alliance.id}
                 href={`/alliances/${alliance.slug}`}
@@ -50,31 +51,26 @@ export default async function AlliancesPage() {
                       {alliance.recruitingStatus}
                     </Tag>
                   )}
-                  {alliance.power != null && <Tag tone="muted">{formatPower(alliance.power)}</Tag>}
-                  {alliance.power == null &&
-                    source.snapshot?.alliances.find((row) => row.tag === alliance.tag) && (
-                      <Tag tone="muted">
-                        Source power:{" "}
-                        {formatPower(
-                          source.snapshot.alliances.find((row) => row.tag === alliance.tag)!.power,
-                        )}
-                      </Tag>
-                    )}
+                  {(alliance.power ?? (current ? alliance.sourcePower : null)) != null && (
+                    <Tag tone="muted">{formatPower(alliance.power ?? (current ? alliance.sourcePower : null))}</Tag>
+                  )}
+                  {current && alliance.sourceRank != null && <Tag tone="muted">Rank #{alliance.sourceRank}</Tag>}
+                  {current && alliance.sourceMembers != null && <Tag tone="muted">{alliance.sourceMembers} members</Tag>}
                   {alliance.openSpots != null && <Tag tone="muted">{alliance.openSpots} spots</Tag>}
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
-          {source.snapshot && (
+          {observed && (
             <SourceNote
-              snapshot={source.snapshot}
-              failed={source.status === "error" || source.status === "blocked"}
+              snapshot={observed}
               link
             />
           )}
 
           {alliancesData.length === 0 && (
-            <p className="mt-4 text-center text-muted-foreground">No alliances found.</p>
+            <p className="mt-4 text-center text-muted-foreground">No alliance directory entries yet.</p>
           )}
         </Section>
       </div>

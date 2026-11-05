@@ -1,12 +1,32 @@
-import { getCreators, getStateSettings } from "@/lib/actions";
+import { getCreators, getRankedPlayers, getStateObservations, getStateSettings } from "@/lib/actions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Section, SectionHeading, Tag, EmptyState } from "@/components/site/primitives";
+import { groupSourceSections } from "@/lib/wosguru/placement";
+import { SourcePlayers } from "@/components/site/SourceData";
+import { SourceSections } from "@/intelligence/SourceSections";
 
 export default async function CommunityPage() {
-  const [settings, creators] = await Promise.all([
+  const [settings, creators, observed] = await Promise.all([
     getStateSettings(),
     getCreators(true),
+    getStateObservations(),
   ]);
+  const rankedPlayers = await getRankedPlayers(settings?.sourceObservedAt ?? null);
+  const players = rankedPlayers.length ? [
+    ...rankedPlayers.map((player) => ({
+      rank: player.sourceRank!,
+      chiefId: player.chiefId,
+      name: player.name,
+      allianceTag: player.effectiveAllianceTag,
+      allianceSlug: player.effectiveAllianceSlug,
+      furnaceLevel: player.furnaceLevel ?? player.sourceFurnaceLevel ?? "",
+      power: player.power ?? player.sourcePower ?? 0,
+      exactPower: player.power ?? player.sourceExactPower,
+      numericFurnaceLevel: player.sourceNumericFurnaceLevel,
+      furnaceBand: player.sourceFurnaceBand,
+    })),
+    ...(observed?.unmatchedPlayers ?? []),
+  ].sort((a, b) => a.rank - b.rank) : observed?.unmatchedPlayers ?? [];
 
   return (
     <SiteLayout settings={settings}>
@@ -68,6 +88,10 @@ export default async function CommunityPage() {
           )}
         </Section>
       </div>
+      {observed && <>
+        <SourcePlayers snapshot={observed} players={players} />
+        <SourceSections sections={groupSourceSections(observed.sections).community} />
+      </>}
     </SiteLayout>
   );
 }
