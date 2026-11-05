@@ -27,6 +27,14 @@ if (args[0] === "--file" && args.length === 2) {
       2,
     ),
   );
+} else if (args.length === 1 && args[0] === "--backfill-native") {
+  const { db } = await import("../db");
+  const { backfillNativeSnapshot } = await import("../app/lib/wosguru/native");
+  try {
+    console.log(JSON.stringify(await backfillNativeSnapshot(db), null, 2));
+  } finally {
+    db.$client.close();
+  }
 } else if (!args.length || (args.length === 1 && args[0] === "--status")) {
   if (process.env.WOSGURU_SYNC_ENABLED === "false")
     throw new Error("State data refresh is disabled.");
@@ -57,6 +65,7 @@ if (args[0] === "--file" && args.length === 2) {
           version: data?.version ?? null,
           nextAllowedAt: row?.nextAllowedAt ? new Date(row.nextAllowedAt).toISOString() : null,
           pending: !!row?.pendingPayload,
+          nativeIssues: row?.nativeIssues ? JSON.parse(row.nativeIssues) : null,
           coverage: data?.coverage ?? null,
           players: data?.players.length ?? 0,
           furnaceRecords: data?.furnacePlayers.length ?? 0,
@@ -77,5 +86,5 @@ if (args[0] === "--file" && args.length === 2) {
     db.$client.close();
   }
 } else {
-  throw new Error("Usage: bun.exe run data:sync [--file <saved-state.html> | --status]");
+  throw new Error("Usage: bun.exe run data:sync [--file <saved-state.html> | --status | --backfill-native]");
 }

@@ -1,6 +1,7 @@
 import { test, expect, beforeEach, afterEach } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { createClient } from "@libsql/client";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import * as schema from "../db/schema.ts";
@@ -16,6 +17,7 @@ import {
 } from "../app/lib/wosguru/http.ts";
 import { syncWosguru as syncCore } from "../app/lib/wosguru/sync.ts";
 import { appendCollectionPage, finishCollection } from "../app/lib/wosguru/collection.ts";
+import { linkedSourceAlliance } from "../app/lib/wosguru/alliance.ts";
 const syncWosguru = (db, options = {}) => syncCore(db, { paceMs: 0, ...options });
 
 // Authored fixture: no captured roster or third-party document is committed.
@@ -65,6 +67,67 @@ const happyFetch = async (url) => {
   return htmlResponse(fixture);
 };
 const stored = () => db.select().from(schema.sourceSync).get();
+
+test("alliance migration preserves existing rows and allows multiple unlinked records", async () => {
+  const legacy = createClient({ url: "file::memory:" });
+  try {
+    await legacy.execute("CREATE TABLE alliances (id TEXT PRIMARY KEY, name TEXT NOT NULL, power INTEGER)");
+    await legacy.execute("INSERT INTO alliances VALUES ('one', 'Edited', 42), ('two', 'Other', 7)");
+    const sql = await readFile("drizzle/sqlite/0006_complete_boom_boom.sql", "utf8");
+    for (const statement of sql.split("--> statement-breakpoint")) await legacy.execute(statement.trim());
+    const rows = await legacy.execute("SELECT id, name, power, source_alliance_tag FROM alliances ORDER BY id");
+    expect(rows.rows.map((row) => [row.id, row.name, row.power, row.source_alliance_tag])).toEqual([["one", "Edited", 42, null], ["two", "Other", 7, null]]);
+  } finally {
+    legacy.close();
+  }
+});
+
+test("alliance links require an explicit unique, unambiguous case-sensitive tag", async () => {
+  await db.insert(schema.alliances).values({ id: "a", name: "Edited name", slug: "a", tag: "TST", power: 111 });
+  await db.insert(schema.alliances).values({ id: "b", name: "Other", slug: "b", tag: "OTHER" });
+  const snapshot = parseStatePage(fixture, new Date(START).toISOString());
+  expect(linkedSourceAlliance(null, snapshot)).toBeNull();
+  expect(linkedSourceAlliance("tst", snapshot)).toBeNull();
+  expect(linkedSourceAlliance("TST", null)).toBeNull();
+  expect(linkedSourceAlliance("TST", snapshot)?.members).toBe(95);
+  expect(linkedSourceAlliance("TST", { ...snapshot, alliances: [...snapshot.alliances, snapshot.alliances[0]] })).toBeNull();
+  await db.update(schema.alliances).set({ sourceAllianceTag: "TST" }).where(eq(schema.alliances.id, "a"));
+  await expect(db.update(schema.alliances).set({ sourceAllianceTag: "TST" }).where(eq(schema.alliances.id, "b")).run()).rejects.toThrow();
+  expect((await db.select().from(schema.alliances).where(eq(schema.alliances.id, "a")).get()).power).toBe(111);
+});
+
+test("linked source refresh retries preserve staff edits and last good data", async () => {
+  await db.insert(schema.alliances).values({ id: "a", name: "Staff name", slug: "a", tag: "TST", sourceAllianceTag: "TST", power: 123 });
+  expect((await syncWosguru(db, { fetcher: happyFetch, now: () => START })).status).toBe("updated");
+  const good = (await stored()).payload;
+  await db.update(schema.alliances).set({ name: "Staff revised", power: 456 }).where(eq(schema.alliances.id, "a"));
+  const failureTime = START + HOUR + 1;
+  const failure = await syncWosguru(db, { now: () => failureTime, fetcher: async () => new Response("busy", { status: 429, headers: { "Retry-After": "120" } }) });
+  expect(failure.status).toBe("failed");
+  expect((await stored()).payload).toBe(good);
+  expect(linkedSourceAlliance("TST", decodeSnapshot((await stored()).payload))?.power).toBe(30_500_000_000);
+  expect((await syncWosguru(db, { fetcher: happyFetch, now: () => failureTime + 120_001 })).status).toBe("updated");
+  expect(await db.select().from(schema.alliances).get()).toMatchObject({ name: "Staff revised", power: 456, sourceAllianceTag: "TST" });
+  expect(await db.select().from(schema.alliances)).toHaveLength(1);
+});
+
+test("native import failure rolls back snapshot publication and retries safely", async () => {
+  expect((await syncWosguru(db, { fetcher: happyFetch, now: () => START })).status).toBe("updated");
+  const before = (await stored()).payload;
+  const beforePlayers = await db.select().from(schema.players);
+  const beforeAlliances = await db.select().from(schema.alliances);
+  const beforeFurnace = await db.select().from(schema.stateFurnacePlayers);
+  await client.execute("CREATE TRIGGER fail_native_import BEFORE INSERT ON state_furnace_players BEGIN SELECT RAISE(ABORT, 'injected native import failure'); END");
+  const failureTime = START + HOUR + 1;
+  const result = await syncWosguru(db, { fetcher: happyFetch, now: () => failureTime });
+  expect(result.status).toBe("failed");
+  expect((await stored()).payload).toBe(before);
+  expect(await db.select().from(schema.players)).toEqual(beforePlayers);
+  expect(await db.select().from(schema.alliances)).toEqual(beforeAlliances);
+  expect(await db.select().from(schema.stateFurnacePlayers)).toEqual(beforeFurnace);
+  await client.execute("DROP TRIGGER fail_native_import");
+  expect((await syncWosguru(db, { fetcher: happyFetch, now: () => failureTime + HOUR + 1 })).status).toBe("updated");
+});
 
 test("parses ratings, partial coverage, rounded values, stable IDs and decoded names", () => {
   const snapshot = parseStatePage(fixture, new Date(START).toISOString());

@@ -10,6 +10,7 @@ import {
 } from "./model";
 import { parseStatePage } from "./parser";
 import { DAY, HOUR, SourceError, fetchText, robotsAllowsState } from "./http";
+import { applyNativeSnapshot } from "./native";
 import {
   appendCollectionPage,
   collectionComplete,
@@ -150,11 +151,12 @@ export async function syncWosguru(
     const finished = now();
     const complete = collectionComplete(job);
     const nextAllowedAt = finished + (complete ? HOUR : Math.max(pace, 1000));
-    const [saved] = await db
-      .update(sourceSync)
+    const completedSnapshot = complete ? finishCollection(job) : null;
+    const [saved] = await db.transaction(async (tx) => {
+      const result = await tx.update(sourceSync)
       .set({
         ...(complete
-          ? { payload: JSON.stringify(finishCollection(job)), lastSuccessAt: finished }
+          ? { payload: JSON.stringify(completedSnapshot), lastSuccessAt: finished }
           : {}),
         pendingPayload: complete ? null : JSON.stringify(job),
         status: complete ? "ready" : "collecting",
@@ -165,6 +167,12 @@ export async function syncWosguru(
       })
       .where(and(eq(sourceSync.id, SOURCE_ID), eq(sourceSync.leaseToken, token)))
       .returning({ id: sourceSync.id });
+      if (result.length && completedSnapshot) {
+        const { missingChiefIds, unresolved, suppressed } = await applyNativeSnapshot(tx, completedSnapshot);
+        await tx.update(sourceSync).set({ nativeIssues: JSON.stringify({ missingChiefIds, unresolved, suppressed }) }).where(eq(sourceSync.id, SOURCE_ID));
+      }
+      return result;
+    });
     if (!saved)
       return {
         status: "skipped",

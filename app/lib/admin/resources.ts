@@ -5,6 +5,7 @@ import * as schema from "@/db/schema";
 
 export const resources = {
   state_settings: { label: "State settings", table: schema.stateSettings, adminOnly: true },
+  source_suppressions: { label: "Suppressed imported records", table: schema.sourceSuppressions, adminOnly: true },
   announcements: { label: "Announcements", table: schema.announcements },
   alliances: { label: "Alliances", table: schema.alliances },
   alliance_leaders: { label: "Alliance leaders", table: schema.allianceLeaders },
@@ -41,9 +42,9 @@ export function resourceMetadata() {
     name,
     label: resource.label,
     adminOnly: "adminOnly" in resource && resource.adminOnly,
-    fields: Object.entries(getTableColumns(resource.table)).filter(([key]) => !["id", "createdAt", "updatedAt"].includes(key)).map(([key, column]) => ({
+    fields: Object.entries(getTableColumns(resource.table)).filter(([key]) => !["id", "createdAt", "updatedAt"].includes(key) && (!key.startsWith("source") || (key === "sourceAllianceTag" && resource.table === schema.alliances) || (key === "sourceKey" && resource.table === schema.sourceSuppressions) || key === "sourceUrl")).map(([key, column]) => ({
       key,
-      label: key.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase()),
+      label: key === "sourceAllianceTag" ? "Confirmed WOS Guru tag (case-sensitive)" : key.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase()),
       kind: column.dataType === "boolean" ? "boolean" : column.dataType === "number" ? "number" : key === "states" || key === "socialLinks" ? "json" : key.endsWith("Date") || key.endsWith("At") ? "date" : "text",
       required: column.notNull && !column.hasDefault,
     })),

@@ -16,6 +16,7 @@ export const getSourceData = cache(async () => {
         lastSuccessAt: sourceSync.lastSuccessAt,
         lastError: sourceSync.lastError,
         nextAllowedAt: sourceSync.nextAllowedAt,
+        nativeIssues: sourceSync.nativeIssues,
       })
       .from(sourceSync)
       .where(eq(sourceSync.id, SOURCE_ID))
@@ -26,6 +27,7 @@ export const getSourceData = cache(async () => {
       lastSuccessAt: row?.lastSuccessAt ?? null,
       lastError: row?.lastError ?? null,
       nextAllowedAt: row?.nextAllowedAt ?? 0,
+      nativeIssues: row?.nativeIssues ?? null,
     };
   } catch (error) {
     // A deployment before its additive migration must still serve editorial data.
@@ -40,6 +42,7 @@ export const getSourceData = cache(async () => {
         lastSuccessAt: null,
         lastError: "Run the database migration to enable state data refresh.",
         nextAllowedAt: 0,
+        nativeIssues: null,
       };
     }
     throw error;
