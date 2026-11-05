@@ -8,10 +8,36 @@ import {
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+export * from "./observations-schema";
 
 // Enums
 export const appRoleEnum = ["admin", "editor", "viewer"] as const;
 export type AppRole = (typeof appRoleEnum)[number];
+
+// One last-good external snapshot; independent of all staff-managed content.
+export const sourceSync = sqliteTable("source_sync", {
+  id: text("id").primaryKey(),
+  payload: text("payload"),
+  pendingPayload: text("pending_payload"),
+  status: text("status", { enum: ["idle", "ready", "collecting", "error", "blocked"] })
+    .notNull()
+    .default("idle"),
+  lastAttemptAt: integer("last_attempt_at"),
+  lastSuccessAt: integer("last_success_at"),
+  nextAllowedAt: integer("next_allowed_at").notNull().default(0),
+  leaseToken: text("lease_token"),
+  leaseExpiresAt: integer("lease_expires_at").notNull().default(0),
+  lastError: text("last_error"),
+  nativeIssues: text("native_issues"), // JSON: unresolved identities and missing Chief IDs
+});
+
+// Explicit administrator deletions must not be undone by future imports.
+export const sourceSuppressions = sqliteTable("source_suppressions", {
+  id: text("id").primaryKey(),
+  entityKind: text("entity_kind", { enum: ["alliance", "player", "svs"] }).notNull(),
+  sourceKey: text("source_key").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [uniqueIndex("source_suppressions_kind_key_unique").on(table.entityKind, table.sourceKey)]);
 
 // Tables
 
@@ -43,6 +69,16 @@ export const alliances = sqliteTable("alliances", {
   name: text("name").notNull(),
   slug: text("slug").notNull(),
   tag: text("tag").notNull(),
+  // Staff-confirmed Guru tag; never inferred from the editable display tag.
+  sourceAllianceTag: text("source_alliance_tag"),
+  sourceManaged: integer("source_managed", { mode: "boolean" }).notNull().default(false),
+  sourceName: text("source_name"),
+  sourceRank: integer("source_rank"),
+  sourcePower: integer("source_power"),
+  sourceMembers: integer("source_members"),
+  sourceMedianFurnace: text("source_median_furnace"),
+  sourceCastleWins: integer("source_castle_wins"),
+  sourceObservedAt: text("source_observed_at"),
   kind: text("kind", { enum: ["active", "farm", "other"] })
     .notNull()
     .default("active"),
@@ -66,7 +102,7 @@ export const alliances = sqliteTable("alliances", {
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [uniqueIndex("alliances_source_alliance_tag_unique").on(table.sourceAllianceTag)]);
 
 // Announcements
 export const announcements = sqliteTable("announcements", {
@@ -205,6 +241,24 @@ export const stateSettings = sqliteTable("state_settings", {
   eligibilityRange: text("eligibility_range"),
   powerCapNote: text("power_cap_note"),
   socialLinks: text("social_links"), // JSON
+  sourceSvsRating: integer("source_svs_rating"),
+  sourcePrepRating: integer("source_prep_rating"),
+  sourceCastleRating: integer("source_castle_rating"),
+  sourceGlobalRank: integer("source_global_rank"),
+  sourceRankedStates: integer("source_ranked_states"),
+  sourceTransferGroup: integer("source_transfer_group"),
+  sourceTransferGroupRank: integer("source_transfer_group_rank"),
+  sourceTransferGroupStates: integer("source_transfer_group_states"),
+  sourceHeroGeneration: integer("source_hero_generation"),
+  sourceFireCrystalLevel: integer("source_fire_crystal_level"),
+  sourceTop100Power: integer("source_top100_power"),
+  sourceTop100Kills: integer("source_top100_kills"),
+  sourceTop100Labyrinth: integer("source_top100_labyrinth"),
+  sourceTop100TransferScore: integer("source_top100_transfer_score"),
+  sourceTop100TroopsPower: integer("source_top100_troops_power"),
+  sourceTop100TechPower: integer("source_top100_tech_power"),
+  sourceTop100ChiefGearPower: integer("source_top100_chief_gear_power"),
+  sourceObservedAt: text("source_observed_at"),
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -241,6 +295,10 @@ export const svsCycles = sqliteTable("svs_cycles", {
   battleScore: integer("battle_score"),
   opponentBattleScore: integer("opponent_battle_score"),
   battleResult: text("battle_result"),
+  sourceManaged: integer("source_managed", { mode: "boolean" }).notNull().default(false),
+  sourceBattleResult: text("source_battle_result"),
+  sourceSide: text("source_side"),
+  sourceObservedAt: text("source_observed_at"),
   opponentPrepScore: integer("opponent_prep_score"),
   storyTitle: text("story_title"),
   storyIntro: text("story_intro"),
@@ -355,12 +413,22 @@ export const players = sqliteTable(
     id: text("id").primaryKey(),
     chiefId: text("chief_id").unique(),
     allianceId: text("alliance_id")
-      .notNull()
       .references(() => alliances.id),
     name: text("name").notNull(),
     rankTitle: text("rank_title", { enum: ["R1", "R2", "R3", "R4", "R5"] }),
     furnaceLevel: text("furnace_level"),
     power: integer("power"),
+    sourceManaged: integer("source_managed", { mode: "boolean" }).notNull().default(false),
+    sourceName: text("source_name"),
+    sourceRank: integer("source_rank"),
+    sourceAllianceTag: text("source_alliance_tag"),
+    sourceAllianceId: text("source_alliance_id").references(() => alliances.id),
+    sourceFurnaceLevel: text("source_furnace_level"),
+    sourceNumericFurnaceLevel: integer("source_numeric_furnace_level"),
+    sourceFurnaceBand: text("source_furnace_band"),
+    sourcePower: integer("source_power"),
+    sourceExactPower: integer("source_exact_power"),
+    sourceObservedAt: text("source_observed_at"),
     kills: integer("kills"),
     activityStatus: text("activity_status", { enum: ["active", "casual", "inactive"] }),
     accountKind: text("account_kind", { enum: ["main", "farm"] }),

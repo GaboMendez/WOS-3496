@@ -36,11 +36,13 @@ export function SiteHeader({ discordUrl, displayName }: SiteHeaderProps) {
             <span className="truncate font-display text-sm font-bold text-primary">
               {displayName ?? "State 3496"}
             </span>
-            <span className="label-mono hidden text-muted-foreground sm:inline">Community portal</span>
+            <span className="label-mono hidden text-muted-foreground sm:inline">
+              Community portal
+            </span>
           </span>
         </Link>
 
-        <nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label="Main">
+        <nav className="ml-auto hidden items-center gap-1 xl:flex" aria-label="Main">
           {NAV.map((item) => (
             <Link
               key={item.href}
@@ -52,7 +54,7 @@ export function SiteHeader({ discordUrl, displayName }: SiteHeaderProps) {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 lg:ml-0">
+        <div className="ml-auto flex items-center gap-2 xl:ml-0">
           {discordUrl ? (
             <a
               href={discordUrl}
@@ -71,14 +73,14 @@ export function SiteHeader({ discordUrl, displayName }: SiteHeaderProps) {
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            className="lg:hidden border-primary/30 text-primary"
+            className="xl:hidden border-primary/30 text-primary"
           >
             {open ? <X className="size-4" /> : <Menu className="size-4" />}
           </Button>
         </div>
       </div>
 
-      <div className={cn("border-t border-primary/30 lg:hidden", open ? "block" : "hidden")}>
+      <div className={cn("border-t border-primary/30 xl:hidden", open ? "block" : "hidden")}>
         <nav className="mx-auto grid w-full max-w-7xl gap-1 px-4 py-3 sm:px-6" aria-label="Mobile">
           {NAV.map((item) => (
             <Link

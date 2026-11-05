@@ -1,12 +1,14 @@
-import { getTimelineEvents, getStateSettings } from "@/lib/actions";
+import { getTimelineEvents, getStateObservations, getStateSettings } from "@/lib/actions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Section, SectionHeading, EmptyState } from "@/components/site/primitives";
 import { formatUtcDate } from "@/lib/state";
+import { SourceSchedule } from "@/components/site/SourceData";
 
 export default async function TimelinePage() {
-  const [settings, events] = await Promise.all([
+  const [settings, events, observed] = await Promise.all([
     getStateSettings(),
     getTimelineEvents(true),
+    getStateObservations(),
   ]);
 
   return (
@@ -55,6 +57,7 @@ export default async function TimelinePage() {
           )}
         </Section>
       </div>
+      {observed && <SourceSchedule snapshot={observed} />}
     </SiteLayout>
   );
 }

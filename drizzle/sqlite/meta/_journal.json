@@ -29,6 +29,34 @@
       "when": 1793332512165,
       "tag": "0003_shocking_post",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793678216499,
+      "tag": "0004_right_invaders",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1793681046465,
+      "tag": "0005_young_corsair",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793833369682,
+      "tag": "0006_complete_boom_boom",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793836255853,
+      "tag": "0007_peaceful_sentinels",
+      "breakpoints": true
     }
   ]
 }

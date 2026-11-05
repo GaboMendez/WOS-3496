@@ -4,6 +4,8 @@ An unofficial community portal for State 3496 in *Whiteout Survival*. The public
 
 The app runs on Next.js with local SQLite or hosted Turso/libSQL. Authentication is handled by the portal.
 
+State intelligence can refresh from WOS Guru's public State 3496 page. See [setup, daily Vercel scheduling and admin refresh](docs/wosguru-integration.md). Imported snapshots stay separate from staff-managed records.
+
 Visitors can read public pages without signing in. Staff publish records through the admin editor; pages show an empty state when relevant content has not been entered. Dates on the site are shown in UTC, with a local-time toggle for recurring alliance events. Images come from staff-entered URLs or the default fortress artwork. The layout supports phones, tablets, and desktops.
 
 ## Quick start on Windows

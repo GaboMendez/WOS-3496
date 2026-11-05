@@ -1,1 +1,2 @@
 - Keep public pages on the shared semantic tactical-dark tokens and JetBrains Mono/Work Sans type system so new screens remain consistent with the portal.
+- For delegated work, `ui_ux_designer` handles focused public and admin interface improvements; `database_data_integration_engineer` handles schema, queries, imports, and data integrity. Ask for the relevant agent by name when delegation is useful. Small, dependent tasks can stay with the main agent.

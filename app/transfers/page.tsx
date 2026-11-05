@@ -1,15 +1,19 @@
 import { Map, Calendar, AlertCircle } from "lucide-react";
 import Link from "next/link";
-import { getTransferWindows, getTransferGuides, getStateSettings } from "@/lib/actions";
+import { getTransferWindows, getTransferGuides, getStateObservations, getStateSettings } from "@/lib/actions";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Section, SectionHeading, Tag, EmptyState } from "@/components/site/primitives";
 import { formatUtcDateTime } from "@/lib/state";
+import { groupSourceSections } from "@/lib/wosguru/placement";
+import { SourceNote } from "@/components/site/SourceNote";
+import { SourceSections } from "@/intelligence/SourceSections";
 
 export default async function TransfersPage() {
-  const [settings, windows, guides] = await Promise.all([
+  const [settings, windows, guides, observed] = await Promise.all([
     getStateSettings(),
     getTransferWindows(true),
     getTransferGuides(true),
+    getStateObservations(),
   ]);
 
   return (
@@ -112,6 +116,10 @@ export default async function TransfersPage() {
           </div>
         </Section>
       </div>
+      {observed && <>
+        <Section><SourceNote snapshot={observed} /></Section>
+        <SourceSections sections={groupSourceSections(observed.sections).transfers} />
+      </>}
     </SiteLayout>
   );
 }

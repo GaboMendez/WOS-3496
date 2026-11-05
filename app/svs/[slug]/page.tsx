@@ -23,6 +23,7 @@ export default async function SvsDetailPage({ params }: PageProps) {
   }
 
   const metrics = await getSvsStoryMetrics(cycle.id);
+  const battleResult = cycle.battleResult ?? cycle.sourceBattleResult;
 
   return (
     <SiteLayout settings={settings}>
@@ -47,9 +48,10 @@ export default async function SvsDetailPage({ params }: PageProps) {
                 <Tag tone={cycle.prepResult === "win" ? "green" : cycle.prepResult === "loss" ? "red" : "muted"}>
                   Prep: {cycle.prepResult || "—"}
                 </Tag>
-                <Tag tone={cycle.battleResult === "win" ? "green" : cycle.battleResult === "loss" ? "red" : "muted"}>
-                  Battle: {cycle.battleResult || "—"}
+                <Tag tone={battleResult === "win" ? "green" : battleResult === "loss" ? "red" : "muted"}>
+                  Battle: {battleResult || "—"}
                 </Tag>
+                {cycle.sourceSide && <Tag tone="muted">{cycle.sourceSide}</Tag>}
               </div>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -95,8 +97,8 @@ export default async function SvsDetailPage({ params }: PageProps) {
                 <div className="flex justify-between">
                   <dt className="label-mono text-muted-foreground">Battle Result</dt>
                   <dd>
-                    <Tag tone={cycle.battleResult === "win" ? "green" : cycle.battleResult === "loss" ? "red" : "muted"}>
-                      {cycle.battleResult || "—"}
+                    <Tag tone={battleResult === "win" ? "green" : battleResult === "loss" ? "red" : "muted"}>
+                      {battleResult || "—"}
                     </Tag>
                   </dd>
                 </div>

@@ -18,7 +18,9 @@
     "db:seed": "bun run db/seed.ts",
     "db:seed:reset": "bun run db/seed.ts --reset",
     "db:seed:check": "bun run db/seed.ts --check",
-    "db:seed:preview": "bun run db/seed.ts --dry-run"
+    "db:seed:preview": "bun run db/seed.ts --dry-run",
+    "data:sync": "bun run scripts/sync-wosguru.ts",
+    "test:wosguru": "bun test tests/wosguru.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -50,6 +52,7 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "autoprefixer": "^10.6.1",
+    "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

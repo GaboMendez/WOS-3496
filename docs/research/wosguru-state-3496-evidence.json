@@ -1,0 +1,107 @@
+{
+  "reviewLocalDate": "2026-11-02",
+  "reviewTimeZone": "America/La_Paz",
+  "method": "Limited anonymous HTTPS GETs, source inspection, and offline validation; no browser network capture or bulk pagination",
+  "requests": [
+    {
+      "url": "https://wosguru.com/robots.txt",
+      "responseDateUtc": "2026-11-03T03:08:35Z",
+      "status": 200,
+      "finding": "General crawling/live research allowed, specific agents and paths restricted; not a republication license"
+    },
+    {
+      "url": "https://wosguru.com/state/3496",
+      "responseDateUtc": "2026-11-03T03:10:47Z",
+      "status": 429,
+      "headers": {
+        "retry-after": "60",
+        "x-origin-proxy": "worker-cap",
+        "cache-control": "no-store"
+      }
+    },
+    {
+      "url": "https://wosguru.com/state/3496",
+      "responseDateUtc": "2026-11-03T03:38:48Z",
+      "status": 200,
+      "bodyBytes": 252496,
+      "headers": {
+        "cache-control": "public, max-age=600",
+        "cf-cache-status": "HIT",
+        "age": "2345",
+        "x-edge-cache": "STALE",
+        "x-powered-by": "Express"
+      }
+    },
+    {
+      "url": "https://wosguru.com/terms",
+      "responseDateUtc": "2026-11-03T03:39:06Z",
+      "status": 200,
+      "policyDate": "2026-08-22",
+      "finding": "Bulk scraping prohibited; permission required for substantial republication; linking welcomed"
+    },
+    {
+      "url": "https://wosguru.com/api/state/3496/furnace?lang=en&band=fc8&page=1",
+      "responseDateUtc": "2026-11-03T03:39:48Z",
+      "status": 200,
+      "bodyBytes": 2792,
+      "authenticationSupplied": false,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "public, max-age=600",
+        "etagPresent": true,
+        "accessControlAllowOriginPresent": false
+      },
+      "pagination": { "total": 83, "page": 1, "per": 50, "pages": 2, "rowsReturned": 50 },
+      "additionalPagesRequested": 0
+    },
+    {
+      "url": "https://wosguru.com/privacy",
+      "status": 200,
+      "policyDate": "2026-10-14",
+      "finding": "Optional Google sign-in; signed access cookies for password-gated alliance pages"
+    },
+    {
+      "url": "https://state3496.vercel.app/",
+      "responseDateUtc": "2026-11-03T03:10:50Z",
+      "status": 200,
+      "bodyBytes": 50569,
+      "finding": "Next.js HTML/assets; existing historical state statistics visible; cookies excluded from evidence"
+    }
+  ],
+  "sourceInspection": {
+    "rosterEndpoint": "/api/state/3496/players?lang=en&q=<query>&page=<n>",
+    "rosterEndpointLiveTested": false,
+    "rosterExpectedResponseFromClientCode": ["html", "nav", "total", "page"],
+    "rosterFallbackQueryParameters": ["pq", "pp"],
+    "rosterDisplayedPageCount": 21,
+    "inlineFetchCredentials": "omit",
+    "telemetryEndpointNotInvoked": "/api/stateview",
+    "documentedDeveloperApiVerified": false
+  },
+  "offlineProofResult": {
+    "exitCode": 0,
+    "sourceUrl": "https://wosguru.com/state/3496",
+    "metadataDateModified": "2026-10-10",
+    "sectionDates": ["2026-10-29T16:36:58.488Z", "2026-10-29"],
+    "coveredPlayers": 1013,
+    "fc8Players": 83,
+    "svsCycleCount": 11,
+    "validatedSampleRows": 50,
+    "firstPlayerMapping": {
+      "chiefId": "586973880",
+      "name": "Aurex",
+      "allianceTag": "WSE",
+      "furnaceLevel": "FC8",
+      "power": 926937228
+    },
+    "saved429BodyRejectedWithExitCode": 1
+  },
+  "scope": {
+    "applicationFunctionalityChanged": false,
+    "dependenciesAdded": false,
+    "databaseReadOrWritten": false,
+    "deployed": false,
+    "operatorContacted": false,
+    "permissionForProductionReuseObtained": false
+  }
+}
